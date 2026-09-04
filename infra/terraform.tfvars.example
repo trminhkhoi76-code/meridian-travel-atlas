@@ -1,0 +1,12 @@
+aws_region  = "ap-southeast-1"
+app_name    = "meridian-travel-atlas"
+branch_name = "main"
+
+# Điền sau khi đã push code lên GitHub. Để trống thì apply xong bạn tự nối repo
+# qua AWS Amplify Console (Connect a repository) — an toàn hơn vì không cần
+# lưu personal access token vào Terraform state.
+# repository_url      = "https://github.com/<org>/meridian-travel-atlas"
+# github_access_token = "<PAT với scope repo>"
+
+# Set khi backend đã có endpoint thật.
+# api_base_url = "https://api.meridiantravel.example"

@@ -1,4 +1,4 @@
-# Kinh Tuyến — Atlas du lịch
+# Meridian Travel — Atlas du lịch
 
 Một storefront du lịch mà trang chủ là quả cầu. Chọn một điểm đến, quả cầu quay và zoom tới đó; đi
 sâu thêm thì hiện các thành phố, rồi từng trải nghiệm, rồi trang đặt chỗ — bốn cấp, cùng một mặt phẳng.

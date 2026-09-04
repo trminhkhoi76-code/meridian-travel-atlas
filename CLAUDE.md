@@ -1,10 +1,10 @@
 # CLAUDE.md
 
-Guidance for Claude Code when working in `kinhtuyen-atlas`.
+Guidance for Claude Code when working in `meridian-travel-atlas`.
 
 ## What this is
 
-**Kinh Tuyến** — a travel-commerce storefront for the Vietnamese market whose home page is a globe.
+**Meridian Travel** — a travel-commerce storefront for the Vietnamese market whose home page is a globe.
 The user descends four levels (globe → country → city → experience); each level rotates and zooms the
 globe and swaps the selling panel on the right.
 

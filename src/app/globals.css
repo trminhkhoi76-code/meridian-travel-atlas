@@ -1,5 +1,5 @@
 /* =========================================================================
-   Kinh Tuyến — hệ token và thành phần dùng chung.
+   Meridian Travel — hệ token và thành phần dùng chung.
    Bảng màu: giấy dó ấm, biển xanh nhạt, đất liền màu cát, nhấn bằng đỏ sơn mài.
    ========================================================================= */
 
@@ -25,9 +25,11 @@
   --grat: #c3d9dc;
   --land: #e8dcc2;
   --land-dim: #f0ead9;
+  --land-has: #cfe0d0;
   --land-sel: #f2d8c5;
   --bord: #ffffff;
   --limb: rgba(31, 27, 23, 0.1);
+  --terrain-water: #6f9aa3;
 
   --accent: #c2492b;
   --accent-bright: #e0663c;
@@ -59,9 +61,11 @@
     --grat: #1b3036;
     --land: #3b3427;
     --land-dim: #26211a;
+    --land-has: #2f4a3f;
     --land-sel: #6a3927;
     --bord: #0c1619;
     --limb: rgba(0, 0, 0, 0.5);
+    --terrain-water: #5a99a6;
 
     --accent: #f58c63;
     --accent-bright: #f58c63;
@@ -91,9 +95,11 @@
   --grat: #1b3036;
   --land: #3b3427;
   --land-dim: #26211a;
+  --land-has: #2f4a3f;
   --land-sel: #6a3927;
   --bord: #0c1619;
   --limb: rgba(0, 0, 0, 0.5);
+  --terrain-water: #5a99a6;
 
   --accent: #f58c63;
   --accent-bright: #f58c63;
@@ -104,6 +110,40 @@
 
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 26px 50px -30px rgba(0, 0, 0, 0.9);
   --glass: rgba(28, 25, 23, 0.84);
+}
+
+/* Theme thứ ba, chọn tay — vẫn sáng nhưng tông xanh dịu thay vì giấy dó ấm. */
+:root[data-theme='blue'] {
+  color-scheme: light;
+
+  --paper: #f1f6fb;
+  --surface: #ffffff;
+  --ink: #1b2430;
+  --ink-2: #5c6b7a;
+  --ink-3: #8a97a6;
+  --line: #dbe6f0;
+  --hair: #eaf1f8;
+
+  --ocean: #dceef5;
+  --ocean-2: #c6e0ec;
+  --grat: #b9d7e3;
+  --land: #e6ecf5;
+  --land-dim: #eef3fa;
+  --land-has: #c9e6da;
+  --land-sel: #cfe0f5;
+  --bord: #ffffff;
+  --limb: rgba(20, 30, 45, 0.08);
+  --terrain-water: #4f7f9c;
+
+  --accent: #c2492b;
+  --accent-bright: #e0663c;
+  --accent-ink: #ffffff;
+  --accent-soft: #fbe9df;
+  --accent-ring: rgba(224, 102, 60, 0.16);
+  --jade: #0e7c6b;
+
+  --shadow: 0 1px 2px rgba(30, 44, 63, 0.06), 0 26px 50px -30px rgba(30, 44, 63, 0.24);
+  --glass: rgba(255, 255, 255, 0.86);
 }
 
 html,
@@ -383,6 +423,24 @@ a {
   color: var(--accent-ink);
 }
 
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  flex: none;
+  color: var(--ink-2);
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.theme-toggle:hover {
+  border-color: var(--ink-3);
+  color: var(--ink);
+}
+
 /* -------------------------------- mở đầu -------------------------------- */
 
 .hero {
@@ -448,6 +506,12 @@ a {
   opacity: 0;
   transform: translateY(-8px);
   pointer-events: none;
+}
+
+/* Chỉ có tác dụng ở màn hẹp (xem @media 860px) — trên desktop hero không che
+   quả cầu nên không cần nút thu gọn. */
+.hero-toggle {
+  display: none;
 }
 
 /* ------------------------------- mục lục -------------------------------- */
@@ -518,12 +582,16 @@ a {
   margin-top: 16px;
   padding-top: 12px;
   border-top: 1px solid var(--line);
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  column-gap: 20px;
+  row-gap: 6px;
 }
 
 .readout span {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
   font-family: var(--font-mono), monospace;
   font-size: 10.5px;
   letter-spacing: 0.08em;
@@ -554,6 +622,12 @@ a {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+/* Chỉ có tác dụng ở màn hẹp (xem @media 860px) — trên desktop panel là thẻ
+   bên cạnh quả cầu, không che gì nên không cần tay kéo thu gọn. */
+.panel-handle {
+  display: none;
 }
 
 .pbody {
@@ -1006,7 +1080,7 @@ a {
 @media (max-width: 860px) {
   .rail {
     padding: 0 14px;
-    gap: 12px;
+    gap: 10px;
   }
   .crumb {
     padding-left: 12px;
@@ -1015,16 +1089,56 @@ a {
     top: 86px;
     left: 20px;
     width: calc(100% - 40px);
+    /* Quả cầu chạy full-bleed phía sau ở màn hẹp — cần nền kính để chữ không
+       chìm vào lục địa/ghim đang vẽ đúng phía sau nó. */
+    background: var(--glass);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
   }
   .hero .htitle {
-    font-size: 1.95rem;
-    margin: 10px 0 12px;
+    font-size: 1.7rem;
+    margin: 8px 0 10px;
   }
   .hero .hint {
     margin-top: 14px;
   }
+  .hero-toggle {
+    display: grid;
+    place-items: center;
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink-2);
+    font-size: 15px;
+    line-height: 1;
+  }
+  .hero.collapsed {
+    padding-bottom: 12px;
+  }
+  .hero.collapsed .htitle,
+  .hero.collapsed > p:not([class]),
+  .hero.collapsed .hint {
+    display: none;
+  }
   .index {
     display: none;
+  }
+  .pin-lab {
+    max-width: 46vw;
+  }
+  .pin-lab b,
+  .pin-lab span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
   }
   .panel {
     top: auto;
@@ -1034,12 +1148,67 @@ a {
     width: auto;
     max-height: 52vh;
     border-radius: 18px;
+    transition: max-height 0.28s ease;
+  }
+  .panel.collapsed {
+    max-height: 92px;
+  }
+  .panel-handle {
+    display: flex;
+    justify-content: center;
+    padding: 10px 0 2px;
+    flex: none;
+  }
+  .panel-handle span {
+    width: 36px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--line);
   }
   .pbody {
     padding: 20px 18px;
   }
   .toast {
     bottom: calc(52vh + 26px);
+  }
+}
+
+@media (max-width: 480px) {
+  .brand em {
+    display: none;
+  }
+  .theme-toggle {
+    padding: 7px 11px;
+  }
+}
+
+.theme-toggle .tt-short {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .theme-toggle .tt-full {
+    display: none;
+  }
+  .theme-toggle .tt-short {
+    display: inline;
+  }
+}
+
+/* Điện thoại nằm ngang: chiều cao quá thấp để hero đủ chỗ trước khi chạm
+   panel dạng bottom sheet — rút gọn còn nhãn + tiêu đề. */
+@media (max-width: 860px) and (max-height: 480px) {
+  .hero {
+    top: 70px;
+    padding: 10px 14px;
+  }
+  .hero .htitle {
+    font-size: 1.3rem;
+    margin: 6px 0 0;
+  }
+  .hero > p:not([class]),
+  .hero .hint {
+    display: none;
   }
 }
 

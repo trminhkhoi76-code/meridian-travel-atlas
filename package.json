@@ -1,8 +1,8 @@
 {
-  "name": "kinhtuyen-atlas",
+  "name": "meridian-travel-atlas",
   "version": "0.1.0",
   "private": true,
-  "description": "Kinh Tuyến — atlas thương mại du lịch: quả cầu là trang chủ, mỗi cấp zoom là một route.",
+  "description": "Meridian Travel — atlas thương mại du lịch: quả cầu là trang chủ, mỗi cấp zoom là một route.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

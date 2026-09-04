@@ -12,14 +12,16 @@ import {
   clamp,
   easeCubicInOut,
   loadGeometry,
+  loadTerrain,
   offsetLngLat,
 } from '@/lib/geo';
-import type { WorldGeometry } from '@/lib/geo';
+import type { TerrainGeometry, WorldGeometry } from '@/lib/geo';
 import { resolveRoute } from '@/lib/route';
 import { degreeLabel, scaleLabel, vndShort } from '@/lib/format';
 import { useItinerary } from './ItineraryProvider';
 import Crumb from './Crumb';
 import IndexRail from './IndexRail';
+import ThemeToggle from './ThemeToggle';
 
 const SPHERE: GeoSphere = { type: 'Sphere' };
 const GRATICULE = geoGraticule10();
@@ -41,11 +43,14 @@ interface Palette {
   grat: string;
   land: string;
   landDim: string;
+  landHas: string;
   landSel: string;
   bord: string;
   line: string;
   accent: string;
   limb: string;
+  water: string;
+  peak: string;
 }
 
 const FALLBACK: Palette = {
@@ -54,11 +59,14 @@ const FALLBACK: Palette = {
   grat: '#c3d9dc',
   land: '#e8dcc2',
   landDim: '#f0ead9',
+  landHas: '#cfe0d0',
   landSel: '#f6c7a8',
   bord: '#ffffff',
   line: '#e6ded0',
   accent: '#e0663c',
   limb: 'rgba(31,27,23,.1)',
+  water: '#6f9aa3',
+  peak: '#9b9284',
 };
 
 export default function AtlasShell({ children }: { children: React.ReactNode }) {
@@ -72,11 +80,13 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const pinNodes = useRef(new Map<string, HTMLAnchorElement | null>());
   const labelWidth = useRef(new Map<string, number>());
+  const widthObserver = useRef<ResizeObserver | null>(null);
 
   const camera = useRef({ rot: [-106, -13] as [number, number], scale: 320 });
   const view = useRef({ w: 0, h: 0, cx: 0, cy: 0, base: 320, dpr: 1, limit: 0 });
   const palette = useRef<Palette>(FALLBACK);
   const geometry = useRef<{ lo: WorldGeometry | null; hi: WorldGeometry | null }>({ lo: null, hi: null });
+  const terrain = useRef<TerrainGeometry | null>(null);
   const fly = useRef<{ t0: number; rot0: [number, number]; rot1: [number, number]; s0: number; s1: number } | null>(null);
   const drag = useRef<{ x: number; y: number; rot: [number, number]; moved: number } | null>(null);
   const wheel = useRef(0);
@@ -85,6 +95,10 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
   const routeRef = useRef(route);
   const reduced = useRef(false);
   const [ready, setReady] = useState(false);
+  // Trên di động, hero + panel là overlay toàn chiều rộng, che gần hết quả
+  // cầu — cho phép thu gọn từng khối để lộ bản đồ. Chỉ có tác dụng ≤860px.
+  const [heroCollapsed, setHeroCollapsed] = useState(false);
+  const [panelCollapsed, setPanelCollapsed] = useState(false);
 
   routeRef.current = route;
 
@@ -141,11 +155,14 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
       grat: get('--grat', FALLBACK.grat),
       land: get('--land', FALLBACK.land),
       landDim: get('--land-dim', FALLBACK.landDim),
+      landHas: get('--land-has', FALLBACK.landHas),
       landSel: get('--land-sel', FALLBACK.landSel),
       bord: get('--bord', FALLBACK.bord),
       line: get('--line', FALLBACK.line),
       accent: get('--accent-bright', FALLBACK.accent),
       limb: get('--limb', FALLBACK.limb),
+      water: get('--terrain-water', FALLBACK.water),
+      peak: get('--ink-3', FALLBACK.peak),
     };
   }, []);
 
@@ -265,6 +282,24 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
     else if (r.country) navigate(hrefOf.world());
   }, [navigate]);
 
+  // Đo bề rộng nhãn ghim bằng ResizeObserver (bất đồng bộ) thay vì
+  // getBoundingClientRect() ngay trong vòng lặp vẽ — gọi nó xen giữa các lần
+  // ghi style.transform buộc trình duyệt flush layout đồng bộ nhiều lần mỗi
+  // frame, đúng lúc quả cầu đang bay, gây giật/lệch nhịp giữa canvas và ghim.
+  useEffect(() => {
+    widthObserver.current = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const key = (entry.target as HTMLElement).dataset.pinKey;
+        const width = entry.borderBoxSize?.[0]?.inlineSize || entry.contentRect.width;
+        if (key && width) labelWidth.current.set(key, width);
+      }
+    });
+    return () => {
+      widthObserver.current?.disconnect();
+      widthObserver.current = null;
+    };
+  }, []);
+
   /* ------------------------------- vòng lặp vẽ ----------------------------- */
 
   // Vòng lặp vẽ chỉ dựng một lần; các hành động điều hướng đọc qua ref để việc
@@ -319,12 +354,7 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
         const hidden = !xy || d > 1.44;
         node.classList.toggle('off', hidden);
         if (!xy || hidden) continue;
-        let width = labelWidth.current.get(pin.key) ?? 0;
-        if (!width && !node.classList.contains('bare')) {
-          width = node.getBoundingClientRect().width;
-          if (width) labelWidth.current.set(pin.key, width);
-        }
-        const span = width || 140;
+        const span = labelWidth.current.get(pin.key) || 140;
         const flip = xy[0] + span > view.current.limit && xy[0] - span > 12;
         node.classList.toggle('flip', flip);
         node.style.transform =
@@ -396,6 +426,22 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
         ctx.fillStyle = selected ? p.landDim : p.land;
         ctx.fill();
 
+        // các quốc gia đã có hành trình để bán — tô riêng cho nổi giữa phần còn lại
+        ctx.beginPath();
+        let hasSold = false;
+        for (const country of COUNTRIES) {
+          if (r.country?.id === country.id) continue;
+          const shape = geo.byId.get(country.id);
+          if (shape) {
+            path(shape);
+            hasSold = true;
+          }
+        }
+        if (hasSold) {
+          ctx.fillStyle = p.landHas;
+          ctx.fill();
+        }
+
         ctx.save();
         ctx.globalAlpha = selected ? 0.4 : 0.75;
         ctx.beginPath();
@@ -413,6 +459,43 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
           ctx.strokeStyle = p.accent;
           ctx.lineWidth = 1.2;
           ctx.stroke();
+        }
+      }
+
+      // địa hình trừu tượng (sông, hồ, đỉnh núi) — chỉ khi đã zoom qua world,
+      // dữ liệu tải lười nên có thể chưa sẵn sàng ở lần vẽ đầu tiên
+      if (r.level !== 'world' && terrain.current) {
+        const t = terrain.current;
+
+        ctx.save();
+        ctx.fillStyle = p.water;
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath();
+        path(t.lakes);
+        ctx.fill();
+
+        ctx.globalAlpha = 0.8;
+        ctx.strokeStyle = p.water;
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        path(t.rivers);
+        ctx.stroke();
+        ctx.restore();
+
+        const centre: [number, number] = [-camera.current.rot[0], -camera.current.rot[1]];
+        ctx.fillStyle = p.peak;
+        for (const peak of t.peaks.features) {
+          const coord = peak.geometry.coordinates as [number, number];
+          if (geoDistance(coord, centre) > 1.44) continue;
+          const xy = projection(coord);
+          if (!xy) continue;
+          const s = 3.4;
+          ctx.beginPath();
+          ctx.moveTo(xy[0], xy[1] - s);
+          ctx.lineTo(xy[0] + s, xy[1] + s * 0.8);
+          ctx.lineTo(xy[0] - s, xy[1] + s * 0.8);
+          ctx.closePath();
+          ctx.fill();
         }
       }
 
@@ -570,19 +653,63 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
     };
   }, []);
 
-  // Bản 50m nét hơn nhiều khi đã zoom vào một quốc gia — chỉ tải khi thực sự cần.
-  useEffect(() => {
-    if (route.level === 'world' || geometry.current.hi) return;
-    let alive = true;
+  // Bản 50m nét hơn nhiều khi đã zoom vào một quốc gia. Tải nó đúng lúc người
+  // dùng bắt đầu zoom (route đổi) làm fetch + parse 756KB tranh CPU với chính
+  // animation bay đang chạy, gây giật hình. Thay vào đó tải trước lúc rảnh,
+  // ngay sau khi bản 110m đã sẵn sàng — vẫn không chặn tải trang ban đầu.
+  const hiRequested = useRef(false);
+  const ensureHi = useCallback(() => {
+    if (hiRequested.current || geometry.current.hi) return;
+    hiRequested.current = true;
     loadGeometry('/geo/countries-50m.json')
       .then((g) => {
-        if (alive) geometry.current.hi = g;
+        geometry.current.hi = g;
       })
-      .catch(() => undefined);
-    return () => {
-      alive = false;
+      .catch(() => {
+        hiRequested.current = false;
+      });
+  }, []);
+
+  // Sông/hồ/đỉnh núi — cùng lý do lười tải + tải trước lúc rảnh như bản 50m ở
+  // trên. Chỉ vẽ từ cấp quốc gia trở xuống nên không cần tới lúc ở world level.
+  const terrainRequested = useRef(false);
+  const ensureTerrain = useCallback(() => {
+    if (terrainRequested.current || terrain.current) return;
+    terrainRequested.current = true;
+    loadTerrain('/geo/terrain-50m.json')
+      .then((t) => {
+        terrain.current = t;
+      })
+      .catch(() => {
+        terrainRequested.current = false;
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!ready) return;
+    const w = window as Window & {
+      requestIdleCallback?: (cb: () => void) => number;
+      cancelIdleCallback?: (id: number) => void;
     };
-  }, [route.level]);
+    const run = () => {
+      ensureHi();
+      ensureTerrain();
+    };
+    if (w.requestIdleCallback) {
+      const id = w.requestIdleCallback(run);
+      return () => w.cancelIdleCallback?.(id);
+    }
+    const id = window.setTimeout(run, 1200);
+    return () => window.clearTimeout(id);
+  }, [ready, ensureHi, ensureTerrain]);
+
+  // Vào thẳng route sâu hơn world bằng deep link, trước khi lúc rảnh ở trên
+  // kịp chạy: tải ngay, không chờ.
+  useEffect(() => {
+    if (route.level === 'world') return;
+    ensureHi();
+    ensureTerrain();
+  }, [route.level, ensureHi, ensureTerrain]);
 
   /* ----------------------- bay tới cảnh của route mới ---------------------- */
 
@@ -606,7 +733,13 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
               href={pin.href}
               className={'pin off' + (pin.selected ? ' sel' : '')}
               ref={(node) => {
+                const prev = pinNodes.current.get(pin.key);
+                if (prev && prev !== node) widthObserver.current?.unobserve(prev);
                 pinNodes.current.set(pin.key, node);
+                if (node) {
+                  node.dataset.pinKey = pin.key;
+                  widthObserver.current?.observe(node);
+                }
               }}
               aria-label={`${pin.name} — ${pin.sub}`}
             >
@@ -622,15 +755,27 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
 
       <header className="rail">
         <Link href={hrefOf.world()} className="brand">
-          Kinh Tuyến<em>Atlas</em>
+          Meridian Travel<em>Atlas</em>
         </Link>
         <Crumb route={route} />
+        <ThemeToggle />
         <Link href={hrefOf.itinerary()} className={'cart' + (keys.length ? ' on' : '')}>
           Hành trình <b>{keys.length}</b>
         </Link>
       </header>
 
-      <section className={'hero' + (atWorld ? '' : ' faded')} aria-hidden={!atWorld}>
+      <section
+        className={'hero' + (atWorld ? '' : ' faded') + (heroCollapsed ? ' collapsed' : '')}
+        aria-hidden={!atWorld}
+      >
+        <button
+          type="button"
+          className="hero-toggle"
+          onClick={() => setHeroCollapsed((v) => !v)}
+          aria-label={heroCollapsed ? 'Mở rộng phần giới thiệu' : 'Thu gọn phần giới thiệu'}
+        >
+          {heroCollapsed ? '+' : '−'}
+        </button>
         <p className="mono">
           Mùa 2026 · {COUNTRIES.length} điểm đến{ready ? '' : ' · đang tải bản đồ'}
         </p>
@@ -655,7 +800,15 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
 
       <IndexRail route={route} />
 
-      <aside className="panel" aria-label="Bảng đặt chỗ">
+      <aside className={'panel' + (panelCollapsed ? ' collapsed' : '')} aria-label="Bảng đặt chỗ">
+        <button
+          type="button"
+          className="panel-handle"
+          onClick={() => setPanelCollapsed((v) => !v)}
+          aria-label={panelCollapsed ? 'Mở rộng bảng đặt chỗ' : 'Thu gọn bảng đặt chỗ'}
+        >
+          <span aria-hidden="true" />
+        </button>
         {children}
       </aside>
     </>

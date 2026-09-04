@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { EXPERIENCE_BY_KEY } from '@/lib/catalog';
 import type { Experience } from '@/lib/catalog';
 
-const STORAGE_KEY = 'kinhtuyen.hanh-trinh';
+const STORAGE_KEY = 'meridian.hanh-trinh';
 
 interface ItineraryValue {
   keys: string[];
