@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { geoContains, geoDistance, geoGraticule10, geoOrthographic, geoPath } from 'd3-geo';
 import type { GeoSphere } from 'd3-geo';
-import { COUNTRIES, TOTAL_CITIES, TOTAL_EXPERIENCES, hrefOf } from '@/lib/catalog';
+import { hrefOf } from '@/lib/catalog';
 import {
   EXPERIENCE_OFFSETS,
   LEVEL_FACTOR,
@@ -13,12 +13,13 @@ import {
   easeCubicInOut,
   loadGeometry,
   loadTerrain,
-  offsetLngLat,
 } from '@/lib/geo';
 import type { TerrainGeometry, WorldGeometry } from '@/lib/geo';
 import { resolveRoute } from '@/lib/route';
 import { degreeLabel, scaleLabel, vndShort } from '@/lib/format';
+import { useCatalog } from './CatalogProvider';
 import { useItinerary } from './ItineraryProvider';
+import { usePinFocus } from './PinFocusProvider';
 import Crumb from './Crumb';
 import IndexRail from './IndexRail';
 import ThemeToggle from './ThemeToggle';
@@ -34,6 +35,8 @@ interface Pin {
   name: string;
   sub: string;
   coord: [number, number];
+  /** Lệch thuần hiển thị (px màn hình), không đổi vị trí địa lý thật của ghim. */
+  nudge?: [number, number];
   selected: boolean;
 }
 
@@ -73,8 +76,11 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
   const router = useRouter();
   const { keys } = useItinerary();
+  const { countries: COUNTRIES, totalCities: TOTAL_CITIES, totalExperiences: TOTAL_EXPERIENCES } =
+    useCatalog();
+  const { hovered, setHovered } = usePinFocus();
 
-  const route = useMemo(() => resolveRoute(pathname), [pathname]);
+  const route = useMemo(() => resolveRoute(pathname, COUNTRIES), [pathname, COUNTRIES]);
   const [base, setBase] = useState(320);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -93,6 +99,8 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
   const lock = useRef(0);
   const pins = useRef<Pin[]>([]);
   const routeRef = useRef(route);
+  const countriesRef = useRef(COUNTRIES);
+  const hoveredRef = useRef(hovered);
   const reduced = useRef(false);
   const [ready, setReady] = useState(false);
   // Trên di động, hero + panel là overlay toàn chiều rộng, che gần hết quả
@@ -101,24 +109,32 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
   const [panelCollapsed, setPanelCollapsed] = useState(false);
 
   routeRef.current = route;
+  countriesRef.current = COUNTRIES;
+  hoveredRef.current = hovered;
+
+  // Đổi trang (bấm thẳng vào dòng đang hover) không bắn onMouseLeave — dọn để
+  // khỏi kẹt nhãn hiện sẵn ở ghim của trang cũ.
+  useEffect(() => {
+    setHovered(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   /* ------------------------------ ghim hiện tại ----------------------------- */
 
   const pinList = useMemo<Pin[]>(() => {
     if (route.isItinerary) return [];
     if (route.city) {
-      const cityScale = base * LEVEL_FACTOR.city;
-      return route.city.experiences.map((e, i) => {
-        const [dx, dy] = EXPERIENCE_OFFSETS[i % EXPERIENCE_OFFSETS.length];
-        return {
-          key: e.key,
-          href: hrefOf.experience(e),
-          name: e.title,
-          sub: vndShort(e.price),
-          coord: offsetLngLat(route.city!.coord, dx, dy, cityScale),
-          selected: route.experience?.key === e.key,
-        };
-      });
+      return route.city.experiences.map((e, i) => ({
+        key: e.key,
+        href: hrefOf.experience(e),
+        name: e.title,
+        sub: vndShort(e.price),
+        // Trải nghiệm không có toạ độ riêng — dùng đúng toạ độ thành phố,
+        // chỉ lệch vị trí hiển thị để ba ghim khỏi chồng lên nhau.
+        coord: route.city!.coord,
+        nudge: EXPERIENCE_OFFSETS[i % EXPERIENCE_OFFSETS.length],
+        selected: route.experience?.key === e.key,
+      }));
     }
     if (route.country) {
       return route.country.cities.map((c) => ({
@@ -138,7 +154,7 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
       coord: c.coord,
       selected: false,
     }));
-  }, [route, base]);
+  }, [route, COUNTRIES]);
 
   pins.current = pinList;
 
@@ -200,11 +216,9 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
   const targetFor = useCallback((): { rot: [number, number]; scale: number } => {
     const r = routeRef.current;
     const b = view.current.base;
+    // Trải nghiệm dùng đúng toạ độ thành phố — không có toạ độ riêng để bay tới.
     if (r.experience && r.city) {
-      const index = r.city.experiences.findIndex((e) => e.key === r.experience!.key);
-      const [dx, dy] = EXPERIENCE_OFFSETS[Math.max(0, index) % EXPERIENCE_OFFSETS.length];
-      const coord = offsetLngLat(r.city.coord, dx, dy, b * LEVEL_FACTOR.city);
-      return { rot: [-coord[0], -coord[1]], scale: b * LEVEL_FACTOR.experience };
+      return { rot: [-r.city.coord[0], -r.city.coord[1]], scale: b * LEVEL_FACTOR.experience };
     }
     if (r.city) return { rot: [-r.city.coord[0], -r.city.coord[1]], scale: b * LEVEL_FACTOR.city };
     if (r.country) {
@@ -341,7 +355,12 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
 
     const placePins = () => {
       const centre: [number, number] = [-camera.current.rot[0], -camera.current.rot[1]];
-      const declutter = routeRef.current.level === 'world';
+      const level = routeRef.current.level;
+      const declutter = level === 'world';
+      // Ghim trải nghiệm dồn sát nhau quanh cùng một toạ độ thành phố — nhãn
+      // luôn ẩn, chỉ hiện khi đang di chuột vào đúng dòng đó ở bảng bên phải.
+      const hideByDefault = level === 'city' || level === 'experience';
+      const hoveredKey = hoveredRef.current;
       const placed: Array<[number, number, number, number]> = [];
       const ordered = pins.current
         .map((pin) => ({ pin, d: geoDistance(pin.coord, centre) }))
@@ -350,23 +369,33 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
       for (const { pin, d } of ordered) {
         const node = pinNodes.current.get(pin.key);
         if (!node) continue;
-        const xy = projection(pin.coord);
-        const hidden = !xy || d > 1.44;
+        const projected = projection(pin.coord);
+        const hidden = !projected || d > 1.44;
         node.classList.toggle('off', hidden);
-        if (!xy || hidden) continue;
+        if (!projected || hidden) continue;
+        // nudge là lệch thuần hiển thị (px), không đổi toạ độ thật của ghim.
+        const x = projected[0] + (pin.nudge?.[0] ?? 0);
+        const y = projected[1] + (pin.nudge?.[1] ?? 0);
         const span = labelWidth.current.get(pin.key) || 140;
-        const flip = xy[0] + span > view.current.limit && xy[0] - span > 12;
+        const flip = x + span > view.current.limit && x - span > 12;
         node.classList.toggle('flip', flip);
         node.style.transform =
-          `translate3d(${xy[0].toFixed(1)}px,${(xy[1] - 6).toFixed(1)}px,0)` +
+          `translate3d(${x.toFixed(1)}px,${(y - 6).toFixed(1)}px,0)` +
           (flip ? ' translateX(-100%)' : '');
+
+        if (hideByDefault) {
+          node.classList.add('bare');
+          node.classList.toggle('peek', pin.key === hoveredKey);
+          continue;
+        }
+        node.classList.remove('peek');
 
         if (!declutter) {
           node.classList.remove('bare');
           continue;
         }
-        const left = flip ? xy[0] - span - 2 : xy[0] - 8;
-        const box: [number, number, number, number] = [left, xy[1] - 20, span + 10, 28];
+        const left = flip ? x - span - 2 : x - 8;
+        const box: [number, number, number, number] = [left, y - 20, span + 10, 28];
         const collides = placed.some(
           ([px, py, pw, ph]) =>
             box[0] < px + pw && px < box[0] + box[2] && box[1] < py + ph && py < box[1] + box[3],
@@ -429,7 +458,7 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
         // các quốc gia đã có hành trình để bán — tô riêng cho nổi giữa phần còn lại
         ctx.beginPath();
         let hasSold = false;
-        for (const country of COUNTRIES) {
+        for (const country of countriesRef.current) {
           if (r.country?.id === country.id) continue;
           const shape = geo.byId.get(country.id);
           if (shape) {
@@ -573,7 +602,7 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
       const point = projection.invert?.([event.clientX, event.clientY]);
       if (!point || Number.isNaN(point[0])) return;
 
-      const hit = COUNTRIES.find((country) => {
+      const hit = countriesRef.current.find((country) => {
         const shape = geo.byId.get(country.id);
         return shape ? geoContains(shape, point) : false;
       });

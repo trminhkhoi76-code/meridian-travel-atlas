@@ -1,19 +1,20 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { COUNTRIES, findCountry, hrefOf } from '@/lib/catalog';
+import { hrefOf } from '@/lib/catalog';
+import { getCountries, getCountry } from '@/lib/catalog-service';
 import { coordLabel, vnd } from '@/lib/format';
 
 interface Props {
   params: Promise<{ country: string }>;
 }
 
-export function generateStaticParams() {
-  return COUNTRIES.map((country) => ({ country: country.slug }));
+export async function generateStaticParams() {
+  return (await getCountries()).map((country) => ({ country: country.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const country = findCountry((await params).country);
+  const country = await getCountry((await params).country);
   if (!country) return {};
   return {
     title: country.name,
@@ -23,7 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function CountryPanel({ params }: Props) {
-  const country = findCountry((await params).country);
+  const country = await getCountry((await params).country);
   if (!country) notFound();
 
   const experiences = country.cities.reduce((n, city) => n + city.experiences.length, 0);

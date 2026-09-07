@@ -1,7 +1,9 @@
 import Link from 'next/link';
-import { COUNTRIES, hrefOf } from '@/lib/catalog';
+import { hrefOf } from '@/lib/catalog';
+import { getCountries } from '@/lib/catalog-service';
 
-export default function NotFound() {
+export default async function NotFound() {
+  const countries = await getCountries();
   return (
     <div className="pbody">
       <p className="mono">Ngoài bản đồ</p>
@@ -13,7 +15,7 @@ export default function NotFound() {
         <span className="mono">Thử một trong sáu điểm đến</span>
       </div>
       <div className="rows">
-        {COUNTRIES.map((country) => (
+        {countries.map((country) => (
           <Link key={country.key} href={hrefOf.country(country)} className="row">
             <span className="txt">
               <b>{country.name}</b>

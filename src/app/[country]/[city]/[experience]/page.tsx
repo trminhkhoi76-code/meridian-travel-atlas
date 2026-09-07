@@ -1,14 +1,15 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { CAT_LABEL, COUNTRIES, findCity, findCountry, findExperience, hrefOf } from '@/lib/catalog';
+import { CAT_LABEL, hrefOf } from '@/lib/catalog';
+import { getCountries, getExperience } from '@/lib/catalog-service';
 import ExperiencePanel from '@/components/ExperiencePanel';
 
 interface Props {
   params: Promise<{ country: string; city: string; experience: string }>;
 }
 
-export function generateStaticParams() {
-  return COUNTRIES.flatMap((country) =>
+export async function generateStaticParams() {
+  return (await getCountries()).flatMap((country) =>
     country.cities.flatMap((city) =>
       city.experiences.map((experience) => ({
         country: country.slug,
@@ -21,9 +22,7 @@ export function generateStaticParams() {
 
 async function resolve(params: Props['params']) {
   const { country: countrySlug, city: citySlug, experience: experienceSlug } = await params;
-  const country = findCountry(countrySlug);
-  const city = findCity(country, citySlug);
-  return findExperience(city, experienceSlug);
+  return getExperience(countrySlug, citySlug, experienceSlug);
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

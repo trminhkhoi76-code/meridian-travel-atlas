@@ -91,24 +91,13 @@ export function easeCubicInOut(t: number): number {
 export const clamp = (v: number, min: number, max: number) => (v < min ? min : v > max ? max : v);
 
 /**
- * Đổi một khoảng lệch tính bằng pixel trên màn hình thành lng/lat, để các ghim
- * trải nghiệm nằm đúng chỗ quanh thành phố mà vẫn xoay cùng quả cầu.
+ * Vị trí các ghim trải nghiệm quanh tâm thành phố, tính bằng pixel màn hình.
+ * Trải nghiệm không có toạ độ riêng — cả ba đều thật ra nằm ở toạ độ thành
+ * phố; khoảng lệch này chỉ để tách ghim/nhãn ra cho khỏi đè lên nhau, không
+ * quy đổi thành lng/lat nên không giả vờ là vị trí địa lý khác thành phố.
  */
-export function offsetLngLat(
-  [lng, lat]: [number, number],
-  dx: number,
-  dy: number,
-  pixelsPerRadian: number,
-): [number, number] {
-  const k = 180 / Math.PI / pixelsPerRadian;
-  const nextLat = clamp(lat - dy * k, -88, 88);
-  const shrink = Math.max(0.2, Math.cos((nextLat * Math.PI) / 180));
-  return [lng + (dx * k) / shrink, nextLat];
-}
-
-/** Vị trí các ghim trải nghiệm quanh tâm thành phố, tính bằng pixel. */
 export const EXPERIENCE_OFFSETS: Array<[number, number]> = [
-  [-128, -64],
-  [110, -8],
-  [-44, 86],
+  [-14, -9],
+  [13, -4],
+  [-5, 11],
 ];

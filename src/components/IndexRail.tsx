@@ -1,7 +1,8 @@
 import Link from 'next/link';
-import { COUNTRIES, hrefOf } from '@/lib/catalog';
+import { hrefOf } from '@/lib/catalog';
 import { LEVEL_LABEL } from '@/lib/geo';
 import type { RouteState } from '@/lib/route';
+import { useCatalog } from './CatalogProvider';
 
 interface Entry {
   key: string;
@@ -15,6 +16,7 @@ interface Entry {
  * quả cầu, cộng dải số đo toạ độ và tỉ lệ bản đồ (giá trị do canvas cập nhật).
  */
 export default function IndexRail({ route }: { route: RouteState }) {
+  const { countries } = useCatalog();
   let heading: string;
   let entries: Entry[];
   let wide = false;
@@ -38,7 +40,7 @@ export default function IndexRail({ route }: { route: RouteState }) {
     }));
   } else {
     heading = 'Mục lục · sáu điểm đến';
-    entries = COUNTRIES.map((c) => ({
+    entries = countries.map((c) => ({
       key: c.key,
       href: hrefOf.country(c),
       label: c.name,

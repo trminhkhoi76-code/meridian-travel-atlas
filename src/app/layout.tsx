@@ -2,7 +2,11 @@ import type { Metadata, Viewport } from 'next';
 import { Be_Vietnam_Pro, IBM_Plex_Mono, Newsreader } from 'next/font/google';
 import './globals.css';
 import AtlasShell from '@/components/AtlasShell';
+import { CatalogProvider } from '@/components/CatalogProvider';
 import { ItineraryProvider } from '@/components/ItineraryProvider';
+import { PinFocusProvider } from '@/components/PinFocusProvider';
+import { getCountries } from '@/lib/catalog-service';
+import { toApiCountry } from '@/lib/api';
 
 const display = Newsreader({
   subsets: ['latin', 'vietnamese'],
@@ -42,7 +46,9 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const countries = (await getCountries()).map(toApiCountry);
+
   return (
     <html
       lang="vi"
@@ -57,9 +63,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               "try{var t=localStorage.getItem('meridian.theme');if(t&&t!=='system')document.documentElement.setAttribute('data-theme',t);}catch(e){}",
           }}
         />
-        <ItineraryProvider>
-          <AtlasShell>{children}</AtlasShell>
-        </ItineraryProvider>
+        <CatalogProvider initial={countries}>
+          <ItineraryProvider>
+            <PinFocusProvider>
+              <AtlasShell>{children}</AtlasShell>
+            </PinFocusProvider>
+          </ItineraryProvider>
+        </CatalogProvider>
       </body>
     </html>
   );

@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { CAT_INCLUDES, CAT_LABEL, DEPARTURES, EXPERIENCE_BY_KEY, hrefOf } from '@/lib/catalog';
+import { CAT_INCLUDES, CAT_LABEL, DEPARTURES, hrefOf } from '@/lib/catalog';
 import { ratingLabel, vnd } from '@/lib/format';
 import { swatch } from '@/lib/swatch';
+import { useCatalog } from './CatalogProvider';
 import { useItinerary } from './ItineraryProvider';
 
 /**
@@ -12,7 +13,8 @@ import { useItinerary } from './ItineraryProvider';
  * nên cả hai phải cùng một component để dùng chung state ngày đã chọn.
  */
 export default function ExperiencePanel({ experienceKey }: { experienceKey: string }) {
-  const experience = EXPERIENCE_BY_KEY.get(experienceKey);
+  const { byKey } = useCatalog();
+  const experience = byKey.get(experienceKey);
   const [departure, setDeparture] = useState(0);
   const { has, add } = useItinerary();
 

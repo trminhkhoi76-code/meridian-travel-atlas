@@ -305,6 +305,16 @@ a {
   display: none;
 }
 
+/* Đang rê chuột/focus vào đúng dòng ở bảng bán bên phải — hiện lại nhãn và
+   nhấn ghim, kể cả khi đang ẩn nhãn mặc định (.bare) ở tầng thành phố. */
+.pin.bare.peek .pin-lab {
+  display: flex;
+}
+
+.pin.peek .pin-dot {
+  box-shadow: 0 0 0 8px var(--accent-ring);
+}
+
 /* Gần rìa phải (nơi bảng bán che mất) thì nhãn lật sang bên trái của điểm. */
 .pin.flip {
   flex-direction: row-reverse;

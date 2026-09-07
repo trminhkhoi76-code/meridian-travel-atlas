@@ -1,8 +1,8 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { EXPERIENCE_BY_KEY } from '@/lib/catalog';
 import type { Experience } from '@/lib/catalog';
+import { useCatalog } from './CatalogProvider';
 
 const STORAGE_KEY = 'meridian.hanh-trinh';
 
@@ -26,6 +26,7 @@ export function useItinerary(): ItineraryValue {
 }
 
 export function ItineraryProvider({ children }: { children: React.ReactNode }) {
+  const { byKey } = useCatalog();
   const [keys, setKeys] = useState<string[]>([]);
   const [message, setMessage] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -37,12 +38,14 @@ export function ItineraryProvider({ children }: { children: React.ReactNode }) {
       if (raw) {
         const parsed: unknown = JSON.parse(raw);
         if (Array.isArray(parsed)) {
-          setKeys(parsed.filter((k): k is string => typeof k === 'string' && EXPERIENCE_BY_KEY.has(k)));
+          setKeys(parsed.filter((k): k is string => typeof k === 'string' && byKey.has(k)));
         }
       }
     } catch {
       /* localStorage bị chặn — vẫn chạy được, chỉ là không nhớ giữa các lần mở. */
     }
+    // Chỉ đọc một lần lúc mount; byKey đã ổn định trong suốt vòng đời trang.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -61,7 +64,7 @@ export function ItineraryProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<ItineraryValue>(() => {
     const lines = keys
-      .map((k) => EXPERIENCE_BY_KEY.get(k))
+      .map((k) => byKey.get(k))
       .filter((e): e is Experience => Boolean(e));
     return {
       keys,
@@ -76,7 +79,7 @@ export function ItineraryProvider({ children }: { children: React.ReactNode }) {
       clear: () => setKeys([]),
       notify,
     };
-  }, [keys, notify]);
+  }, [keys, notify, byKey]);
 
   return (
     <Ctx.Provider value={value}>
