@@ -1231,3 +1231,74 @@ a {
     transition-duration: 0.01ms;
   }
 }
+
+/* ------------------- repro bảy ca so khớp URL (/url-match) ---------------
+   Chỉ dùng trong nhánh tái hiện, không thuộc luồng bán. Màu lấy từ token chung
+   nên hai theme tự khớp, không hard-code. */
+
+.um-str {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--ink);
+  background: var(--hair);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 11px;
+  margin: 4px 0 14px;
+  overflow-wrap: anywhere;
+}
+
+.um-mode {
+  margin: -10px 0 18px;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+
+.um-sym {
+  margin: 0 0 20px;
+  padding: 2px 0 2px 12px;
+  border-left: 2px solid var(--accent);
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+
+.um-readout {
+  margin: 22px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.um-readout dl {
+  margin: 4px 0 16px;
+}
+
+.um-readout dl:last-child {
+  margin-bottom: 0;
+}
+
+.um-readout dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--hair);
+}
+
+.um-readout dt {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  flex: none;
+}
+
+.um-readout dd {
+  margin: 0;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11.5px;
+  color: var(--ink);
+  text-align: right;
+  overflow-wrap: anywhere;
+}

@@ -13,7 +13,7 @@ Stack: Next.js 15 (App Router) + React 19 + TypeScript, plain CSS (no Tailwind),
 
 ```bash
 npm run dev        # http://localhost:3000
-npm run build      # prerenders all 83 routes
+npm run build      # prerenders every static route
 npm run typecheck  # tsc --noEmit
 ```
 
@@ -63,6 +63,18 @@ date and the add button) has to live in one client component — see
 `public/geo/countries-110m.json` (105 KB) draws the world level; `countries-50m.json` (740 KB) is
 fetched lazily the first time the user goes below world level and used from then on. Both come from
 `world-atlas@2.0.2`.
+
+## `/url-match` — the repro branch
+
+Seven pages reproducing URL-matching mismatches between the measurement (heatmap) and popup
+sides. They sit outside the product flow, set `robots.index = false`, and inherit the tags in
+`app/layout.tsx`. The seven cases are data in [src/lib/url-match.ts](src/lib/url-match.ts);
+the hosts they need are built by [infra/url-match/](infra/url-match/README.md).
+
+`next.config.ts` sets `skipTrailingSlashRedirect` **only because case #4** needs `…/v1.2` and
+`…/v1.2/` to both return 200. [src/middleware.ts](src/middleware.ts) puts the 308 back for
+every other path — build the redirect with `new URL(…, request.url)`, not `nextUrl.clone()`,
+which re-appends the slash and redirects to itself. Removing either half breaks the other.
 
 ## Not built yet
 

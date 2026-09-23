@@ -1,0 +1,11 @@
+# Bắt buộc — App ID của Amplify app đang chạy. Mọi biến khác đã có mặc định đúng.
+#   aws amplify list-apps --region ap-northeast-1 \
+#     --query "apps[].{name:name,id:appId}" --output table
+amplify_app_id = "dxxxxxxxxxxxxx"
+
+# Các giá trị dưới đây chỉ cần khai nếu muốn khác mặc định:
+# aws_region  = "ap-northeast-1"        # region chứa Amplify app
+# branch_name = "main"
+# zone_name   = "meridian-travel.org"   # zone đã delegate về Route 53
+# idn_prefix  = "xn--wgv71a"            # 日本
+# http_prefix = "http-demo"             # host chỉ-HTTP của ca 7
