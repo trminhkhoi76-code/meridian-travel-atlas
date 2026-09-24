@@ -46,6 +46,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
 };
+// 149456490 - 1428893104
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const countries = (await getCountries()).map(toApiCountry);
@@ -63,7 +64,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
-window.__fid = window.__fid || [];__fid.push([149456490]);
+window.__fid = window.__fid || [];__fid.push([551802805]);
 (function() {
 function mieruca(){if(typeof window.__fjsld != "undefined") return; window.__fjsld = 1; var fjs = document.createElement('script'); fjs.type = 'text/javascript'; fjs.async = true; fjs.id = "fjssync"; var timestamp = new Date;fjs.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://hm.mieru-ca.com/service/js/mieruca-hm.js?v='+ timestamp.getTime(); var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(fjs, x); };
 setTimeout(mieruca, 500); document.readyState != "complete" ? (window.attachEvent ? window.attachEvent("onload", mieruca) : window.addEventListener("load", mieruca, false)) : mieruca();
@@ -77,7 +78,7 @@ setTimeout(mieruca, 500); document.readyState != "complete" ? (window.attachEven
           strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
-window.__optimizeid = window.__optimizeid || [];__optimizeid.push([1428893104]);
+window.__optimizeid = window.__optimizeid || [];__optimizeid.push([1506201978]);
 (function () {var fjs = document.createElement('script');fjs.type = 'text/javascript';
 fjs.async = true;fjs.id = "fjssync";var timestamp = new Date;fjs.src = 'https://opt.mieru-ca.com/service/js/mieruca-optimize.js?v=' + timestamp.getTime();
 var x = document.getElementsByTagName('script')[0];x.parentNode.insertBefore(fjs, x);})();
