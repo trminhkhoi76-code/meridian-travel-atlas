@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { JA_THEME_LABEL, JA_THEME_SHORT } from '@/lib/ja';
+import type { Lang } from '@/lib/ja';
 
 type Theme = 'system' | 'light' | 'dark' | 'blue';
 
@@ -21,7 +23,7 @@ function apply(theme: Theme) {
   else root.setAttribute('data-theme', theme);
 }
 
-export default function ThemeToggle() {
+export default function ThemeToggle({ lang = 'vi' }: { lang?: Lang }) {
   // Mặc định 'system' khớp với HTML server render (chưa có data-theme) — đọc
   // lựa chọn đã lưu sau khi mount, như ItineraryProvider, để không lệch hydrate.
   const [theme, setTheme] = useState<Theme>('system');
@@ -46,15 +48,18 @@ export default function ThemeToggle() {
     }
   };
 
+  const label = lang === 'ja' ? JA_THEME_LABEL[theme] : LABEL[theme];
+  const short = lang === 'ja' ? JA_THEME_SHORT[theme] : SHORT[theme];
+
   return (
     <button
       type="button"
       className="theme-toggle mono"
       onClick={cycle}
-      aria-label={`Giao diện: ${LABEL[theme]}. Bấm để đổi.`}
+      aria-label={lang === 'ja' ? `テーマ: ${label}。クリックで切り替え。` : `Giao diện: ${label}. Bấm để đổi.`}
     >
-      <span className="tt-full">{LABEL[theme]}</span>
-      <span className="tt-short">{SHORT[theme]}</span>
+      <span className="tt-full">{label}</span>
+      <span className="tt-short">{short}</span>
     </button>
   );
 }

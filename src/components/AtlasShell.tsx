@@ -16,7 +16,8 @@ import {
 } from '@/lib/geo';
 import type { TerrainGeometry, WorldGeometry } from '@/lib/geo';
 import { resolveRoute } from '@/lib/route';
-import { degreeLabel, scaleLabel, vndShort } from '@/lib/format';
+import { degreeLabel, scaleLabel, vndMan, vndShort } from '@/lib/format';
+import { JA_COUNTRY, JA_UI } from '@/lib/ja';
 import { useCatalog } from './CatalogProvider';
 import { useItinerary } from './ItineraryProvider';
 import { usePinFocus } from './PinFocusProvider';
@@ -112,6 +113,12 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
   countriesRef.current = COUNTRIES;
   hoveredRef.current = hovered;
 
+  // Layout gốc render sẵn <html lang="vi">; bản tiếng Nhật (/nhat-ban-ja) đổi lại
+  // phía client để trình đọc màn hình và font fallback CJK chọn đúng ngôn ngữ.
+  useEffect(() => {
+    document.documentElement.lang = route.lang;
+  }, [route.lang]);
+
   // Đổi trang (bấm thẳng vào dòng đang hover) không bắn onMouseLeave — dọn để
   // khỏi kẹt nhãn hiện sẵn ở ghim của trang cũ.
   useEffect(() => {
@@ -137,11 +144,12 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
       }));
     }
     if (route.country) {
+      const ja = route.lang === 'ja' ? JA_COUNTRY[route.country.slug] : undefined;
       return route.country.cities.map((c) => ({
         key: c.key,
         href: hrefOf.city(c),
-        name: c.name,
-        sub: 'từ ' + vndShort(c.from),
+        name: ja?.cities[c.slug]?.name ?? c.name,
+        sub: ja ? JA_UI.from(vndMan(c.from)) : 'từ ' + vndShort(c.from),
         coord: c.coord,
         selected: false,
       }));
@@ -338,9 +346,10 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
     const paintReadout = () => {
       const lat = -camera.current.rot[1];
       const lon = ((-camera.current.rot[0] + 540) % 360) - 180;
+      const ja = routeRef.current.lang === 'ja';
       const values: Record<string, string> = {
-        lat: degreeLabel(lat, 'B', 'N'),
-        lon: degreeLabel(lon, 'Đ', 'T'),
+        lat: ja ? degreeLabel(lat, '北', '南') : degreeLabel(lat, 'B', 'N'),
+        lon: ja ? degreeLabel(lon, '東', '西') : degreeLabel(lon, 'Đ', 'T'),
         scale: scaleLabel(camera.current.scale),
       };
       for (const name of Object.keys(values)) {
@@ -750,11 +759,12 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
   }, [pathname, route.isItinerary, startFly]);
 
   const atWorld = route.level === 'world' && !route.isItinerary;
+  const ja = route.lang === 'ja';
 
   return (
     <>
       <div className="stage">
-        <canvas ref={canvasRef} className="globe" aria-label="Quả cầu điểm đến" />
+        <canvas ref={canvasRef} className="globe" aria-label={ja ? JA_UI.globeLabel : 'Quả cầu điểm đến'} />
         <div className="pins">
           {pinList.map((pin) => (
             <Link
@@ -787,9 +797,9 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
           Meridian Travel<em>Atlas</em>
         </Link>
         <Crumb route={route} />
-        <ThemeToggle />
+        <ThemeToggle lang={route.lang} />
         <Link href={hrefOf.itinerary()} className={'cart' + (keys.length ? ' on' : '')}>
-          Hành trình <b>{keys.length}</b>
+          {ja ? JA_UI.itinerary : 'Hành trình'} <b>{keys.length}</b>
         </Link>
       </header>
 
@@ -829,12 +839,19 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
 
       <IndexRail route={route} />
 
-      <aside className={'panel' + (panelCollapsed ? ' collapsed' : '')} aria-label="Bảng đặt chỗ">
+      <aside
+        className={'panel' + (panelCollapsed ? ' collapsed' : '')}
+        aria-label={ja ? JA_UI.panelLabel : 'Bảng đặt chỗ'}
+      >
         <button
           type="button"
           className="panel-handle"
           onClick={() => setPanelCollapsed((v) => !v)}
-          aria-label={panelCollapsed ? 'Mở rộng bảng đặt chỗ' : 'Thu gọn bảng đặt chỗ'}
+          aria-label={
+            ja
+              ? panelCollapsed ? JA_UI.expandPanel : JA_UI.collapsePanel
+              : panelCollapsed ? 'Mở rộng bảng đặt chỗ' : 'Thu gọn bảng đặt chỗ'
+          }
         >
           <span aria-hidden="true" />
         </button>
