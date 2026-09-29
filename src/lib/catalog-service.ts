@@ -46,3 +46,20 @@ export async function getExperience(
   const city = findCity(country, citySlug);
   return findExperience(city, experienceSlug);
 }
+
+let byKey: Map<string, Experience> | null = null;
+
+/** Tra theo `Experience.key` — dùng khi client gửi lên danh sách khoá (hành trình). */
+export async function getExperienceByKey(key: string): Promise<Experience | undefined> {
+  if (!byKey) {
+    // Dựng xong rồi mới gán: các lời gọi song song (Promise.all) không được thấy map dở dang.
+    const map = new Map<string, Experience>();
+    for (const country of await all()) {
+      for (const city of country.cities) {
+        for (const experience of city.experiences) map.set(experience.key, experience);
+      }
+    }
+    byKey = map;
+  }
+  return byKey.get(key);
+}

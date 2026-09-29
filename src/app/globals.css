@@ -1052,6 +1052,173 @@ a {
   letter-spacing: -0.02em;
 }
 
+/* ------------------------------- đặt chỗ -------------------------------- */
+
+.bform fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.field {
+  margin: 0 0 16px;
+  min-width: 0;
+}
+
+.field > .mono {
+  display: block;
+  margin: 0 0 6px;
+}
+
+.field input,
+.field textarea {
+  display: block;
+  width: 100%;
+  font: inherit;
+  font-size: 14.5px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 12px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 78px;
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: var(--ink-3);
+}
+
+.field input:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+
+.field.invalid input,
+.field.invalid textarea {
+  border-color: var(--accent);
+}
+
+.field .dates {
+  margin: 0;
+}
+
+.field .date {
+  padding: 8px 6px;
+  min-width: 0;
+}
+
+.field .date b {
+  white-space: nowrap;
+}
+
+.ferr {
+  margin: 5px 0 0;
+  font-size: 12px;
+  color: var(--accent);
+}
+
+.pair {
+  display: flex;
+  gap: 12px;
+}
+
+.pair .field {
+  flex: 1;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.stepper button {
+  width: 40px;
+  height: 38px;
+  font-size: 17px;
+  color: var(--ink-2);
+  flex: none;
+}
+
+.stepper button:hover:not(:disabled) {
+  color: var(--ink);
+  background: var(--hair);
+}
+
+.stepper button:first-child {
+  border-radius: 7px 0 0 7px;
+}
+
+.stepper button:last-child {
+  border-radius: 0 7px 7px 0;
+}
+
+.stepper button:disabled {
+  color: var(--ink-3);
+  opacity: 0.45;
+  cursor: default;
+}
+
+.stepper output {
+  flex: 1;
+  text-align: center;
+  font-size: 14.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Ô bẫy bot: ẩn khỏi người thật nhưng vẫn nằm trong DOM để bot điền vào. */
+.hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.formerr {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 13px;
+}
+
+.receipt {
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 0 0 8px;
+}
+
+.receipt .mono {
+  display: block;
+}
+
+.receipt b {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+  filter: none;
+}
+
 /* ------------------------------- thông báo ------------------------------ */
 
 .toast {
@@ -1177,6 +1344,11 @@ a {
   }
   .pbody {
     padding: 20px 18px;
+  }
+  /* Dưới 16px Safari iOS tự zoom trang khi focus ô nhập. */
+  .field input,
+  .field textarea {
+    font-size: 16px;
   }
   .toast {
     bottom: calc(52vh + 26px);
