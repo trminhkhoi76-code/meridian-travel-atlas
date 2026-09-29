@@ -26,7 +26,20 @@ export function vndShort(value: number): string {
   return groupThousands(value / 1000) + 'k';
 }
 
+/** 1100000 -> "110万₫" — nhãn ghim của bản tiếng Nhật, đếm theo 万 (10.000). */
+export function vndMan(value: number): string {
+  const man = Math.round(value / 10_000).toString();
+  return man.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '万₫';
+}
+
 const decimal = (value: number, digits: number) => value.toFixed(digits).replace('.', ',');
+
+/** Bản tiếng Nhật của coordLabel: "北緯 37.000°  東経 138.200°". */
+export function coordLabelJa([lng, lat]: [number, number]): string {
+  const ns = lat >= 0 ? '北緯' : '南緯';
+  const ew = lng >= 0 ? '東経' : '西経';
+  return `${ns} ${Math.abs(lat).toFixed(3)}°  ${ew} ${Math.abs(lng).toFixed(3)}°`;
+}
 
 export function coordLabel([lng, lat]: [number, number]): string {
   const ns = lat >= 0 ? 'B' : 'N'; // Bắc / Nam

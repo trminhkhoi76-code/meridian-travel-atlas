@@ -1,20 +1,23 @@
 import Link from 'next/link';
 import { hrefOf } from '@/lib/catalog';
+import { JA_COUNTRY, JA_UI } from '@/lib/ja';
 import type { RouteState } from '@/lib/route';
 
 /** Đường dẫn phân cấp: mỗi mảnh là một cấp zoom, bấm vào là trồi lên cấp đó. */
 export default function Crumb({ route }: { route: RouteState }) {
   const nodes: React.ReactNode[] = [];
   const atWorld = route.level === 'world' && !route.isItinerary;
+  const ja = route.lang === 'ja';
+  const worldLabel = ja ? JA_UI.world : 'Thế giới';
 
   nodes.push(
     atWorld ? (
       <span className="cur" key="w">
-        Thế giới
+        {worldLabel}
       </span>
     ) : (
       <Link href={hrefOf.world()} key="w">
-        Thế giới
+        {worldLabel}
       </Link>
     ),
   );
@@ -24,7 +27,7 @@ export default function Crumb({ route }: { route: RouteState }) {
     nodes.push(
       current ? (
         <span className="cur" key="c">
-          {route.country.name}
+          {(ja && JA_COUNTRY[route.country.slug]?.name) || route.country.name}
         </span>
       ) : (
         <Link href={hrefOf.country(route.country)} key="c">
@@ -66,7 +69,7 @@ export default function Crumb({ route }: { route: RouteState }) {
   }
 
   return (
-    <nav className="crumb" aria-label="Vị trí">
+    <nav className="crumb" aria-label={ja ? JA_UI.crumbLabel : 'Vị trí'}>
       {nodes.flatMap((node, i) =>
         i === 0
           ? [node]

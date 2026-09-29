@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { hrefOf } from '@/lib/catalog';
 import { LEVEL_LABEL } from '@/lib/geo';
+import { JA_COUNTRY, JA_LEVEL_LABEL, JA_UI } from '@/lib/ja';
 import type { RouteState } from '@/lib/route';
 import { useCatalog } from './CatalogProvider';
 
@@ -17,6 +18,7 @@ interface Entry {
  */
 export default function IndexRail({ route }: { route: RouteState }) {
   const { countries } = useCatalog();
+  const ja = route.lang === 'ja' ? JA_COUNTRY[route.country?.slug ?? ''] : undefined;
   let heading: string;
   let entries: Entry[];
   let wide = false;
@@ -31,11 +33,11 @@ export default function IndexRail({ route }: { route: RouteState }) {
       current: route.experience?.key === e.key,
     }));
   } else if (route.country) {
-    heading = `Mục lục · ${route.country.name}`;
+    heading = ja ? `${JA_UI.index} · ${ja.name}` : `Mục lục · ${route.country.name}`;
     entries = route.country.cities.map((c) => ({
       key: c.key,
       href: hrefOf.city(c),
-      label: c.name,
+      label: ja?.cities[c.slug]?.name ?? c.name,
       current: false,
     }));
   } else {
@@ -49,7 +51,7 @@ export default function IndexRail({ route }: { route: RouteState }) {
   }
 
   return (
-    <div className="index">
+    <div className="index" lang={ja ? 'ja' : undefined}>
       <h3 className="mono">{heading}</h3>
       <ul>
         {entries.map((e) => (
@@ -63,16 +65,16 @@ export default function IndexRail({ route }: { route: RouteState }) {
       </ul>
       <div className="readout">
         <span>
-          VĨ ĐỘ <b data-readout="lat">—</b>
+          {ja ? JA_UI.lat : 'VĨ ĐỘ'} <b data-readout="lat">—</b>
         </span>
         <span>
-          KINH ĐỘ <b data-readout="lon">—</b>
+          {ja ? JA_UI.lon : 'KINH ĐỘ'} <b data-readout="lon">—</b>
         </span>
         <span>
-          TỈ LỆ <b data-readout="scale">—</b>
+          {ja ? JA_UI.scale : 'TỈ LỆ'} <b data-readout="scale">—</b>
         </span>
         <span>
-          CẤP <b>{LEVEL_LABEL[route.level]}</b>
+          {ja ? JA_UI.level : 'CẤP'} <b>{(ja ? JA_LEVEL_LABEL : LEVEL_LABEL)[route.level]}</b>
         </span>
       </div>
     </div>
