@@ -3,22 +3,35 @@ import type { UrlCase } from '@/lib/url-match';
 import UrlReadout from './UrlReadout';
 
 /**
- * Khung chung cho bảy trang tái hiện. Giữ đúng hợp đồng của `.panel`: chỉ một khối
+ * Khung chung cho các trang tái hiện. Giữ đúng hợp đồng của `.panel`: chỉ một khối
  * `.pbody` cuộn được, không có `.pfoot` vì ở đây không có gì để bán.
+ *
+ * `current` hiện ngay dưới tiêu đề (biến thể đang mở), `children` chèn sau triệu chứng.
  */
-export default function UrlMatchCase({ c }: { c: UrlCase }) {
+export default function UrlMatchCase({
+  c,
+  current,
+  children,
+}: {
+  c: UrlCase;
+  current?: React.ReactNode;
+  children?: React.ReactNode;
+}) {
+  const aligned = c.kind === 'aligned';
+
   return (
     <div className="pbody">
       <Link href="/url-match" className="back">
-        ← Bảy ca so khớp URL
+        ← {aligned ? 'Bộ repro so khớp URL' : 'Bảy ca so khớp URL'}
       </Link>
 
       <div className="tagline">
-        <span className="tag">Ca {c.n}</span>
+        <span className="tag">{aligned ? 'Ngoài 7 ca' : `Ca ${c.n}`}</span>
         <span className="mono">{c.point}</span>
       </div>
 
       <h1 className="ptitle sm">{c.title}</h1>
+      {current}
       <p className="pdesc">{c.correct}</p>
 
       <dl className="meta">
@@ -49,6 +62,8 @@ export default function UrlMatchCase({ c }: { c: UrlCase }) {
 
       <p className="um-sym">{c.symptom}</p>
 
+      {children}
+
       {c.controls?.length ? (
         <>
           <p className="mono">Đối chứng</p>
@@ -56,7 +71,18 @@ export default function UrlMatchCase({ c }: { c: UrlCase }) {
             {c.controls.map((ctrl) => (
               <li key={ctrl.path}>
                 <span>
-                  <Link href={ctrl.path}>{ctrl.label}</Link> — {ctrl.expect}
+                  <Link href={ctrl.path}>{ctrl.label}</Link> —{' '}
+                  {ctrl.verdict ? (
+                    <>
+                      <b>
+                        {ctrl.verdict.heatmap ? 'ghi heatmap' : 'không ghi'} ·{' '}
+                        {ctrl.verdict.popup ? 'popup' : 'không popup'}
+                        {ctrl.verdict.issue ? ' ❗' : ''}
+                      </b>
+                      {'. '}
+                    </>
+                  ) : null}
+                  {ctrl.expect}
                 </span>
               </li>
             ))}

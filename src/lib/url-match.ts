@@ -34,6 +34,13 @@ export interface ControlUrl {
   label: string;
   path: string;
   expect: string;
+  /** Kỳ vọng riêng của từng side cho đúng URL này — ca nào có nhiều biến thể thì mới cần. */
+  verdict?: {
+    heatmap: boolean;
+    popup: boolean;
+    /** Đánh dấu dòng chính là triệu chứng khách hàng báo. */
+    issue?: boolean;
+  };
 }
 
 export interface UrlCase {
@@ -59,6 +66,11 @@ export interface UrlCase {
   expectHeatmap: boolean;
   expectPopup: boolean;
   controls?: ControlUrl[];
+  /**
+   * `mismatch` (mặc định): hai side lệch nhau — bảy ca của bộ repro.
+   * `aligned`: hai side đồng ý với nhau nhưng kết quả vẫn khiến khách thấy sai.
+   */
+  kind?: 'mismatch' | 'aligned';
 }
 
 export const URL_CASES: UrlCase[] = [
@@ -212,8 +224,83 @@ export const URL_CASES: UrlCase[] = [
   },
 ];
 
+const QUERY_CASE_PATH = '/url-match/08-query';
+
+/**
+ * Ngoài bảy ca: hai side so khớp giống hệt nhau, nên không phải lệch — nhưng quy tắc
+ * chung đó vẫn cho popup hiện ở URL khách không hề đăng ký. Tách mảng riêng để không
+ * làm sai chữ "7 ca" và phần đếm của URL_CASES.
+ */
+export const EXTRA_CASES: UrlCase[] = [
+  {
+    id: '08-query',
+    n: 8,
+    kind: 'aligned',
+    point: 'Query string so khớp theo chuỗi con',
+    title: 'Query của request chỉ cần chứa query đăng ký',
+    path: `${QUERY_CASE_PATH}?u=nhat-ban-lp-us`,
+    openUrl: `https://${HOSTS.www}${QUERY_CASE_PATH}?u=nhat-ban-lp-us`,
+    setting: `https://${HOSTS.www}${QUERY_CASE_PATH}?u=nhat-ban-lp`,
+    mode:
+      'Không chọn expression — chế độ mặc định chỉ kiểm tra domain & path. Bắt buộc: Console lưu search không có dấu "?", nên setting vừa có query vừa có expression thì popup không bao giờ hiện.',
+    measurement: 'host, path equals · query + hash contains',
+    popup: 'host, path equals · query + hash contains',
+    correct:
+      'Hai side đồng ý với nhau: khi không chọn expression, host và path so bằng equals, còn query + hash so bằng contains — request chứa chuỗi đăng ký là khớp. Không phải lệch giữa hai side, mà là quy tắc chung này cho u=nhat-ban-lp-us lọt qua.',
+    symptom:
+      'Popup hiện trên URL -us không được setup; pageview của -us bị measurement gộp vào url_id của setting gốc.',
+    expectHeatmap: true,
+    expectPopup: true,
+    controls: [
+      {
+        label: '?u=nhat-ban-lp',
+        path: `${QUERY_CASE_PATH}?u=nhat-ban-lp`,
+        expect: 'URL đã setup — đối chứng dương.',
+        verdict: { heatmap: true, popup: true },
+      },
+      {
+        label: '?u=nhat-ban-lp-us',
+        path: `${QUERY_CASE_PATH}?u=nhat-ban-lp-us`,
+        expect: 'Chứa u=nhat-ban-lp — chính là issue.',
+        verdict: { heatmap: true, popup: true, issue: true },
+      },
+      {
+        label: '?u=nhat-ban-lp-ja',
+        path: `${QUERY_CASE_PATH}?u=nhat-ban-lp-ja`,
+        expect: 'Cùng cơ chế với -us.',
+        verdict: { heatmap: true, popup: true, issue: true },
+      },
+      {
+        label: '?x=1&u=nhat-ban-lp',
+        path: `${QUERY_CASE_PATH}?x=1&u=nhat-ban-lp`,
+        expect:
+          'Popup so với query không có "?" nên khớp ở bất kỳ vị trí nào; measurement thêm "?" vào đầu cả hai vế, "?x=1&u=…" không chứa "?u=…" nên không ghi. Riêng dòng này hai side lệch nhau.',
+        verdict: { heatmap: false, popup: true },
+      },
+      {
+        label: '?u=nhat-ban',
+        path: `${QUERY_CASE_PATH}?u=nhat-ban`,
+        expect: 'Query không chứa chuỗi đăng ký.',
+        verdict: { heatmap: false, popup: false },
+      },
+      {
+        label: '?u=nhat-ban-l',
+        path: `${QUERY_CASE_PATH}?u=nhat-ban-l`,
+        expect: 'Ngắn hơn chuỗi đăng ký.',
+        verdict: { heatmap: false, popup: false },
+      },
+      {
+        label: 'Không query',
+        path: QUERY_CASE_PATH,
+        expect: 'Query rỗng không chứa chuỗi đăng ký.',
+        verdict: { heatmap: false, popup: false },
+      },
+    ],
+  },
+];
+
 export function findCase(id: string): UrlCase {
-  const found = URL_CASES.find((c) => c.id === id);
+  const found = [...URL_CASES, ...EXTRA_CASES].find((c) => c.id === id);
   if (!found) throw new Error(`Không có ca so khớp URL nào mang id "${id}"`);
   return found;
 }

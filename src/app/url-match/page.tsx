@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { hrefOf } from '@/lib/catalog';
-import { HOSTS, URL_CASES } from '@/lib/url-match';
+import { EXTRA_CASES, HOSTS, URL_CASES } from '@/lib/url-match';
 
 export const metadata: Metadata = {
   title: 'Bảy ca so khớp URL',
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 const HOST_ROLES: { host: string; role: string }[] = [
   { host: HOSTS.base, role: 'Ca 3–6, và vế "không www" của ca 1' },
-  { host: HOSTS.www, role: 'Ca 1, vế "có www"' },
+  { host: HOSTS.www, role: 'Ca 1, vế "có www" — và ca query ngoài 7 ca' },
   { host: `${HOSTS.idnUnicode} (${HOSTS.idnAscii})`, role: 'Ca 2' },
   { host: HOSTS.httpOnly, role: 'Ca 7 — S3 website endpoint, chỉ phục vụ HTTP' },
 ];
@@ -41,6 +41,28 @@ export default function UrlMatchIndex() {
               <b>
                 Ca {c.n} — {c.point}
               </b>
+              <small>{c.symptom}</small>
+            </div>
+            <div className="pr">
+              <b>{c.expectHeatmap ? 'ghi' : '—'}</b>
+              <small>{c.expectPopup ? 'popup' : 'không popup'}</small>
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      <div className="sechead">
+        <span className="mono">Ngoài 7 ca — hai phía giống nhau nhưng khách vẫn thấy sai</span>
+      </div>
+      <p className="pdesc">
+        Không phải lệch giữa hai side: cả measurement lẫn popup áp cùng một quy tắc, và chính quy
+        tắc đó cho URL không đăng ký lọt qua.
+      </p>
+      <div className="rows">
+        {EXTRA_CASES.map((c) => (
+          <Link key={c.id} href={c.path} className="row">
+            <div className="txt">
+              <b>{c.point}</b>
               <small>{c.symptom}</small>
             </div>
             <div className="pr">
