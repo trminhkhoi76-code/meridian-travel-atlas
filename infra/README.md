@@ -28,6 +28,32 @@ profile) với quyền tạo Amplify app.
   repository đã nối) — `terraform plan` sau đó có thể đề nghị xoá cấu hình repo;
   bỏ qua thay đổi đó hoặc import lại giá trị vào state nếu cần khớp tuyệt đối.
 
+## Khu quản trị (/admin)
+
+`/admin` dùng Basic Auth. Thiếu `admin_password` thì production khoá hẳn (503).
+
+```bash
+openssl rand -hex 24          # dán vào admin_password trong terraform.tfvars
+terraform apply
+```
+
+Sau đó **chạy build lại** (Amplify Console → Redeploy, hoặc push một commit). Đổi
+biến môi trường không tự build lại, mà server chỉ nhận giá trị mới qua bước build.
+
+Những điều cần biết:
+
+- **Biến không phải `NEXT_PUBLIC_*` không tới được server SSR** nếu chỉ đặt trong
+  Amplify, vì Amplify chỉ đưa chúng vào lúc build. `amplify.yml` ghi `ADMIN_USER`,
+  `ADMIN_PASSWORD`, `BOOKING_ADMIN_EMAIL` ra `.env.production` trước `next build`.
+  Biến server mới cũng phải thêm vào vòng lặp đó.
+- **Chỉ dùng `A-Z a-z 0-9 . _ ~ + / = -`.** Next đọc `.env` bằng dotenv: `#` cắt
+  chuỗi, `$` bị expand (kể cả trong ngoặc), nên mật khẩu sẽ bị cắt ngắn mà không
+  báo. Terraform (validation) và `amplify.yml` đều chặn trường hợp này.
+- **Đừng thêm biến tay trong Amplify Console.** `environment_variables` trong
+  `amplify.tf` là danh sách độc quyền, nên lần `apply` sau sẽ xoá biến thêm tay.
+- Mật khẩu nằm trong Terraform state và hiện rõ trong Amplify Console, nên giữ state
+  ở nơi an toàn. Muốn chặt hơn thì chuyển sang Amplify Secrets (SSM Parameter Store).
+
 ## Khi backend sẵn sàng
 
 Set `api_base_url` trong `terraform.tfvars` rồi `terraform apply` lại — Amplify

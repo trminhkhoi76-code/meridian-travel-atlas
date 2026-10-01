@@ -42,3 +42,33 @@ variable "api_base_url" {
   type        = string
   default     = ""
 }
+
+variable "admin_user" {
+  description = "Tên đăng nhập Basic Auth cho /admin."
+  type        = string
+  default     = "admin"
+}
+
+variable "admin_password" {
+  description = <<-EOT
+    Mật khẩu Basic Auth cho /admin. Để trống thì production khoá /admin (trả 503).
+    Sinh bằng `openssl rand -hex 24`. Giá trị sẽ nằm trong Terraform state và hiện
+    rõ trong Amplify Console (biến môi trường) — giữ state ở nơi an toàn.
+  EOT
+  type        = string
+  default     = null
+  sensitive   = true
+
+  validation {
+    # Next đọc .env bằng dotenv: `#` cắt chuỗi, `$` bị expand — mật khẩu sẽ bị cắt ngắn
+    # trong im lặng. amplify.yml cũng chặn lại lúc build, ở đây báo sớm hơn.
+    condition     = var.admin_password == null || can(regex("^[A-Za-z0-9._~+/=-]{16,}$", var.admin_password))
+    error_message = "admin_password cần ít nhất 16 ký tự, chỉ gồm A-Z a-z 0-9 . _ ~ + / = - (không #, $, khoảng trắng, ngoặc)."
+  }
+}
+
+variable "booking_admin_email" {
+  description = "Hộp thư nhận mail báo yêu cầu đặt chỗ; nhiều địa chỉ ngăn bằng dấu phẩy."
+  type        = string
+  default     = ""
+}
