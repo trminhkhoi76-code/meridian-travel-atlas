@@ -6,6 +6,7 @@ import SiteFrame, { PublicOnly } from '@/components/SiteFrame';
 import { CatalogProvider } from '@/components/CatalogProvider';
 import { ItineraryProvider } from '@/components/ItineraryProvider';
 import { PinFocusProvider } from '@/components/PinFocusProvider';
+import { SessionProvider } from '@/components/SessionProvider';
 import { getCountries } from '@/lib/catalog-service';
 import { toApiCountry } from '@/lib/api';
 
@@ -97,11 +98,13 @@ var x = document.getElementsByTagName('script')[0];x.parentNode.insertBefore(fjs
           }}
         />
         <CatalogProvider initial={countries}>
-          <ItineraryProvider>
-            <PinFocusProvider>
-              <SiteFrame>{children}</SiteFrame>
-            </PinFocusProvider>
-          </ItineraryProvider>
+          <SessionProvider>
+            <ItineraryProvider>
+              <PinFocusProvider>
+                <SiteFrame>{children}</SiteFrame>
+              </PinFocusProvider>
+            </ItineraryProvider>
+          </SessionProvider>
         </CatalogProvider>
       </body>
     </html>

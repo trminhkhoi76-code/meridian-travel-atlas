@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { logoutAction } from '@/app/tai-khoan/actions';
 import ThemeToggle from '../ThemeToggle';
 
 const LINKS = [
@@ -11,7 +12,7 @@ const LINKS = [
   { href: '/admin/danh-muc', label: 'Danh mục' },
 ];
 
-export default function AdminNav({ overdue }: { overdue: number }) {
+export default function AdminNav({ overdue, email }: { overdue: number; email?: string }) {
   const pathname = usePathname();
   const isOn = (href: string) => (href === '/admin' ? pathname === href : pathname.startsWith(href));
 
@@ -36,6 +37,14 @@ export default function AdminNav({ overdue }: { overdue: number }) {
       </ul>
       <div className="anav-foot">
         <ThemeToggle />
+        {email && (
+          <form action={logoutAction} className="anav-user">
+            <span className="mono" title={email}>
+              {email}
+            </span>
+            <button type="submit">Đăng xuất</button>
+          </form>
+        )}
         <a href="/">← Trang khách</a>
       </div>
     </nav>

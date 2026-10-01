@@ -48,6 +48,8 @@ export const JA_COUNTRY: Record<string, JaCountry> = {
 export const JA_UI = {
   world: '世界',
   itinerary: '旅程',
+  login: 'ログイン',
+  account: 'アカウント',
   index: '目次',
   bestSeason: 'ベストシーズン',
   flight: 'フライト',

@@ -451,6 +451,61 @@ a {
   color: var(--ink);
 }
 
+/* Nút tài khoản: cùng dáng với theme-toggle, giữ chỗ khi đang tải phiên. */
+.acct {
+  display: inline-flex;
+  align-items: center;
+  max-width: 160px;
+  min-height: 33px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  flex: none;
+  color: var(--ink-2);
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.acct:hover {
+  border-color: var(--ink-3);
+  color: var(--ink);
+}
+
+.acct.off {
+  width: 86px;
+  opacity: 0;
+}
+
+.acct-full {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.acct-short {
+  display: none;
+}
+
+.authswitch {
+  font-size: 13px;
+  color: var(--ink-2);
+  margin: 4px 0 0;
+}
+
+.authswitch a,
+.pdesc a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.meta div.wide {
+  width: 100%;
+  padding-right: 0;
+  overflow-wrap: anywhere;
+}
+
 /* -------------------------------- mở đầu -------------------------------- */
 
 .hero {
@@ -1369,11 +1424,19 @@ a {
 }
 
 @media (max-width: 640px) {
-  .theme-toggle .tt-full {
+  .theme-toggle .tt-full,
+  .acct-full {
     display: none;
   }
-  .theme-toggle .tt-short {
+  .theme-toggle .tt-short,
+  .acct-short {
     display: inline;
+  }
+  .acct {
+    padding: 7px 11px;
+  }
+  .acct.off {
+    width: 36px;
   }
 }
 

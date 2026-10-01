@@ -12,6 +12,7 @@ import { swatch } from '@/lib/swatch';
 import BookingForm, { EMPTY_DRAFT, FIELD_ORDER, fieldId } from './BookingForm';
 import type { BookingDraft } from './BookingForm';
 import { useItinerary } from './ItineraryProvider';
+import { useSession } from './SessionProvider';
 
 const FORM_ID = 'booking-form';
 
@@ -55,6 +56,7 @@ function Line({ line, onRemove }: { line: Experience; onRemove?: () => void }) {
  */
 export default function ItineraryPanel() {
   const { keys, lines, total, remove, clear } = useItinerary();
+  const { user: session } = useSession();
   const [step, setStep] = useState<Step>('review');
   const [draft, setDraft] = useState<BookingDraft>(EMPTY_DRAFT);
   const [errors, setErrors] = useState<BookingErrors>({});
@@ -64,6 +66,12 @@ export default function ItineraryPanel() {
   const [sent, setSent] = useState<Sent | null>(null);
 
   const guests = draft.adults + draft.children;
+
+  // Đã đăng nhập: điền sẵn email tài khoản, nhưng không đè lên email khách đã tự gõ.
+  function openForm() {
+    if (session && !draft.email) setDraft({ ...draft, email: session.email });
+    setStep('form');
+  }
 
   function change<K extends keyof BookingDraft>(field: K, value: BookingDraft[K]) {
     const next = { ...draft, [field]: value };
@@ -237,7 +245,7 @@ export default function ItineraryPanel() {
           {/* `key` khác nút gửi ở bước form: React flush state ngay trong lúc click, nên nếu
               tái dùng cùng một <button> thì nó đã thành type=submit trước khi trình duyệt
               chạy hành vi mặc định — và form trống bị gửi luôn. */}
-          <button key="next" type="button" className="btn" onClick={() => setStep('form')}>
+          <button key="next" type="button" className="btn" onClick={openForm}>
             Gửi yêu cầu đặt chỗ
           </button>
         </div>

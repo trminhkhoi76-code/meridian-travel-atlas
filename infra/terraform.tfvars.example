@@ -11,8 +11,7 @@ branch_name = "main"
 # Set khi backend đã có endpoint thật.
 # api_base_url = "https://api.meridiantravel.example"
 
-# Khu quản trị (/admin). Để trống admin_password thì production khoá /admin (503).
-# Sinh mật khẩu: openssl rand -hex 24
-# admin_user          = "admin"
-# admin_password      = "<48 ký tự hex>"
+# auth-service: đăng nhập cho khách và quyền vào /admin (chỉ tài khoản ROLE_ADMIN).
+# Đổi sang https:// ngay khi ALB của auth-service có certificate.
+# auth_service_url    = "http://auth-service.meridian-travel.org"
 # booking_admin_email = "dat-cho@meridiantravel.example"

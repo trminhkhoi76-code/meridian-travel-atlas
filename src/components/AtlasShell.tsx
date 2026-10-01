@@ -21,6 +21,7 @@ import { JA_COUNTRY, JA_UI } from '@/lib/ja';
 import { useCatalog } from './CatalogProvider';
 import { useItinerary } from './ItineraryProvider';
 import { usePinFocus } from './PinFocusProvider';
+import AccountLink from './AccountLink';
 import Crumb from './Crumb';
 import IndexRail from './IndexRail';
 import ThemeToggle from './ThemeToggle';
@@ -798,6 +799,7 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
         </Link>
         <Crumb route={route} />
         <ThemeToggle lang={route.lang} />
+        <AccountLink lang={route.lang} />
         <Link href={hrefOf.itinerary()} className={'cart' + (keys.length ? ' on' : '')}>
           {ja ? JA_UI.itinerary : 'Hành trình'} <b>{keys.length}</b>
         </Link>

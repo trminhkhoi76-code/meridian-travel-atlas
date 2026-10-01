@@ -12,7 +12,7 @@ function cell(v: string | number): string {
   return `"${s.replace(/"/g, '""')}"`;
 }
 
-/** GET /admin/yeu-cau/csv?… — cùng bộ lọc với trang danh sách. Được Basic Auth của /admin che. */
+/** GET /admin/yeu-cau/csv?… — cùng bộ lọc với trang danh sách. Middleware chỉ cho ROLE_ADMIN vào /admin. */
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const filter = parseBookingFilter(url.searchParams);

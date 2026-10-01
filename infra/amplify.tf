@@ -14,9 +14,8 @@ resource "aws_amplify_app" "this" {
   environment_variables = merge(
     {
       NEXT_PUBLIC_API_BASE_URL = var.api_base_url
-      ADMIN_USER               = var.admin_user
+      AUTH_SERVICE_URL         = var.auth_service_url
     },
-    var.admin_password == null ? {} : { ADMIN_PASSWORD = var.admin_password },
     var.booking_admin_email == "" ? {} : { BOOKING_ADMIN_EMAIL = var.booking_admin_email },
   )
 }

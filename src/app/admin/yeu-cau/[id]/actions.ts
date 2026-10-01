@@ -14,7 +14,7 @@ export interface ActionState {
 
 /**
  * Đổi trạng thái / thêm ghi chú nội bộ. Server action POST về chính URL
- * /admin/yeu-cau/[id], nên luôn nằm sau Basic Auth của middleware.
+ * /admin/yeu-cau/[id], nên luôn qua bước kiểm ROLE_ADMIN của middleware.
  */
 export async function updateBookingAction(prev: ActionState, form: FormData): Promise<ActionState> {
   const id = String(form.get('id') ?? '');

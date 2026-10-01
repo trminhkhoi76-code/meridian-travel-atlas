@@ -12,11 +12,11 @@ frontend:
         # và `$` bị expand (kể cả trong ngoặc), nên giá trị lạ bị chặn ở đây thay vì để
         # mật khẩu bị cắt ngắn trong im lặng. Không bao giờ in giá trị ra log build.
         - |
-          for k in ADMIN_USER ADMIN_PASSWORD BOOKING_ADMIN_EMAIL; do
+          for k in AUTH_SERVICE_URL BOOKING_ADMIN_EMAIL; do
             v="$(printenv "$k" || true)"
             [ -z "$v" ] && continue
-            if ! printf '%s' "$v" | grep -Eq '^[A-Za-z0-9._~+/=@,-]+$'; then
-              echo "$k chứa ký tự không dùng được trong .env — chỉ dùng A-Z a-z 0-9 . _ ~ + / = @ , -"
+            if ! printf '%s' "$v" | grep -Eq '^[A-Za-z0-9._~+/=@,:-]+$'; then
+              echo "$k chứa ký tự không dùng được trong .env — chỉ dùng A-Z a-z 0-9 . _ ~ + / = @ , : -"
               exit 1
             fi
             printf '%s=%s\n' "$k" "$v" >> .env.production

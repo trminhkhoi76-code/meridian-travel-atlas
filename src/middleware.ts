@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { ACCESS_COOKIE, ACCOUNT_PATHS, LOGIN_PATH, REFRESH_COOKIE, isFresh } from '@/lib/auth';
+import type { CookieSpec } from '@/lib/auth-service';
+import { AuthServiceError, CLEARED_COOKIES, cookieAttributes, me, refresh, tokenCookies } from '@/lib/auth-service';
 
 /**
  * `skipTrailingSlashRedirect` trong next.config.ts tắt chuẩn hoá dấu gạch chéo cuối cho
@@ -13,56 +16,83 @@ const KEEP_TRAILING_SLASH = '/url-match/04-dot';
 
 const ADMIN_PATH = /^\/(api\/)?admin(\/|$)/;
 
-/** So sánh không rò thời gian theo vị trí ký tự sai đầu tiên (Edge runtime không có timingSafeEqual). */
-function safeEqual(a: string, b: string): boolean {
-  let diff = a.length ^ b.length;
-  for (let i = 0; i < Math.max(a.length, b.length); i++) {
-    diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
-  }
-  return diff === 0;
+/**
+ * Chỉ làm mới phiên ở các route dynamic. Trang atlas prerender tĩnh và có thể bị CDN
+ * cache: gắn Set-Cookie vào đó là có nguy cơ phát cookie của khách này cho khách khác.
+ * SessionProvider gọi /api/session ngay khi mount, nên phiên vẫn được giữ sống.
+ */
+function needsSession(pathname: string): boolean {
+  return pathname === '/api/session' || ACCOUNT_PATHS.includes(pathname) || ADMIN_PATH.test(pathname);
 }
 
 /**
- * Basic Auth cho khu quản trị — tạm thời, tới khi có đăng nhập thật. Đặt
- * ADMIN_USER / ADMIN_PASSWORD trong env. Thiếu mật khẩu: dev thì cho qua (kèm
- * cảnh báo), production thì khoá hẳn, để không bao giờ lỡ mở admin ra ngoài.
+ * Access token sắp hết hạn (hoặc cookie đã bị trình duyệt xoá) mà còn refresh token thì
+ * đổi cặp mới. Token mới được ghi cả vào request — để Server Component phía sau đọc được
+ * ngay — lẫn vào response cho trình duyệt.
+ *
+ * Nhiều request song song có thể cùng làm mới bằng một refresh token. Auth-service hiện
+ * không xoay vòng token nên việc này vô hại; nếu sau này bật phát hiện dùng lại token thì
+ * phải gom các lần làm mới này lại.
  */
-function guardAdmin(request: NextRequest): NextResponse | null {
-  const password = process.env.ADMIN_PASSWORD;
-  if (!password) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.warn('[admin] ADMIN_PASSWORD chưa đặt — khu quản trị đang mở (chỉ ở dev).');
-      return null;
-    }
-    return new NextResponse('Khu quản trị chưa được cấu hình.', { status: 503 });
-  }
+async function renewSession(request: NextRequest): Promise<{ accessToken?: string; updates: CookieSpec[] }> {
+  const accessToken = request.cookies.get(ACCESS_COOKIE)?.value;
+  const refreshToken = request.cookies.get(REFRESH_COOKIE)?.value;
+  if (!refreshToken || isFresh(accessToken)) return { accessToken, updates: [] };
 
-  const user = process.env.ADMIN_USER ?? 'admin';
-  const header = request.headers.get('authorization') ?? '';
-  if (header.startsWith('Basic ')) {
-    try {
-      const decoded = atob(header.slice(6));
-      const sep = decoded.indexOf(':');
-      if (sep >= 0 && safeEqual(decoded.slice(0, sep), user) && safeEqual(decoded.slice(sep + 1), password)) {
-        return null;
-      }
-    } catch {
-      /* base64 hỏng — rơi xuống 401 */
+  try {
+    const tokens = await refresh(refreshToken);
+    const updates = tokenCookies(tokens);
+    for (const c of updates) request.cookies.set(c.name, c.value);
+    return { accessToken: tokens.accessToken, updates };
+  } catch (err) {
+    if (err instanceof AuthServiceError && err.status === 401) {
+      // Refresh token hết hạn / tài khoản bị khoá: đăng xuất hẳn.
+      request.cookies.delete([ACCESS_COOKIE, REFRESH_COOKIE]);
+      return { updates: CLEARED_COOKIES };
     }
+    // Auth-service không phản hồi: giữ nguyên cookie, lần sau thử lại.
+    return { accessToken, updates: [] };
   }
-  return new NextResponse('Cần đăng nhập.', {
-    status: 401,
-    headers: { 'WWW-Authenticate': 'Basic realm="Meridian admin", charset="UTF-8"' },
-  });
 }
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  if (ADMIN_PATH.test(pathname)) {
-    const denied = guardAdmin(request);
-    if (denied) return denied;
+/**
+ * Khu quản trị chỉ cho tài khoản ROLE_ADMIN. Hỏi auth-service mỗi request vì FE không
+ * giữ secret để tự kiểm chữ ký JWT, và role trong token có thể đã cũ.
+ */
+async function guardAdmin(request: NextRequest, accessToken: string | undefined): Promise<NextResponse | null> {
+  if (accessToken) {
+    try {
+      const user = await me(accessToken);
+      if (user.role === 'ROLE_ADMIN') return null;
+      return new NextResponse('Tài khoản này không có quyền quản trị.', {
+        status: 403,
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+      });
+    } catch (err) {
+      if (!(err instanceof AuthServiceError && err.status === 401)) {
+        return new NextResponse('Dịch vụ đăng nhập tạm thời không phản hồi.', {
+          status: 503,
+          headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+        });
+      }
+    }
   }
+
+  const { pathname, search } = request.nextUrl;
+  if (pathname.startsWith('/api/')) return NextResponse.json({ error: 'Cần đăng nhập.' }, { status: 401 });
+  const login = new URL(LOGIN_PATH, request.url);
+  login.searchParams.set('next', pathname + search);
+  // 303: server action là POST, quay về trang đăng nhập phải bằng GET.
+  return NextResponse.redirect(login, 303);
+}
+
+function withCookies(response: NextResponse, updates: CookieSpec[]): NextResponse {
+  for (const c of updates) response.cookies.set(c.name, c.value, { ...cookieAttributes, maxAge: c.maxAge });
+  return response;
+}
+
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
 
   if (pathname.startsWith(KEEP_TRAILING_SLASH)) return NextResponse.next();
 
@@ -74,12 +104,20 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(target, 308);
   }
 
-  const response = NextResponse.next();
-  if (ADMIN_PATH.test(pathname)) {
-    response.headers.set('X-Robots-Tag', 'noindex, nofollow');
-    response.headers.set('Cache-Control', 'private, no-store');
+  if (!needsSession(pathname)) return NextResponse.next();
+
+  const session = await renewSession(request);
+  const isAdmin = ADMIN_PATH.test(pathname);
+
+  if (isAdmin) {
+    const denied = await guardAdmin(request, session.accessToken);
+    if (denied) return withCookies(denied, session.updates);
   }
-  return response;
+
+  const response = NextResponse.next({ request: { headers: request.headers } });
+  response.headers.set('Cache-Control', 'private, no-store');
+  if (isAdmin) response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  return withCookies(response, session.updates);
 }
 
 export const config = {
