@@ -49,8 +49,8 @@ export async function getExperience(
 
 let byKey: Map<string, Experience> | null = null;
 
-/** Tra theo `Experience.key` — dùng khi client gửi lên danh sách khoá (hành trình). */
-export async function getExperienceByKey(key: string): Promise<Experience | undefined> {
+/** Bảng tra `Experience.key` -> Experience, cho trang admin và route handler. */
+export async function getExperienceIndex(): Promise<Map<string, Experience>> {
   if (!byKey) {
     // Dựng xong rồi mới gán: các lời gọi song song (Promise.all) không được thấy map dở dang.
     const map = new Map<string, Experience>();
@@ -61,5 +61,10 @@ export async function getExperienceByKey(key: string): Promise<Experience | unde
     }
     byKey = map;
   }
-  return byKey.get(key);
+  return byKey;
+}
+
+/** Tra theo `Experience.key` — dùng khi client gửi lên danh sách khoá (hành trình). */
+export async function getExperienceByKey(key: string): Promise<Experience | undefined> {
+  return (await getExperienceIndex()).get(key);
 }

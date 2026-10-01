@@ -138,3 +138,60 @@ export async function submitBooking(
   const { error, errors } = (body ?? {}) as { error?: string; errors?: BookingErrors };
   throw new BookingSubmitError(error ?? 'Chưa gửi được yêu cầu. Vui lòng thử lại.', errors);
 }
+
+/* --------------------------- phía quản trị (admin) ------------------------- */
+
+/** Mã trạng thái giữ ASCII; nhãn tiếng Việt ở STATUS_LABEL. */
+export const BOOKING_STATUSES = ['NEW', 'CONTACTED', 'CONFIRMED', 'CANCELLED'] as const;
+export type BookingStatus = (typeof BOOKING_STATUSES)[number];
+
+export const STATUS_LABEL: Record<BookingStatus, string> = {
+  NEW: 'Mới',
+  CONTACTED: 'Đang tư vấn',
+  CONFIRMED: 'Đã xác nhận',
+  CANCELLED: 'Đã huỷ',
+};
+
+/** Các bước chuyển hợp lệ — huỷ rồi vẫn mở lại được, về "Đang tư vấn". */
+export const NEXT_STATUS: Record<BookingStatus, BookingStatus[]> = {
+  NEW: ['CONTACTED', 'CONFIRMED', 'CANCELLED'],
+  CONTACTED: ['CONFIRMED', 'CANCELLED'],
+  CONFIRMED: ['CANCELLED'],
+  CANCELLED: ['CONTACTED'],
+};
+
+/** Cam kết với khách: liên hệ lại trong 24 giờ. */
+export const SLA_HOURS = 24;
+
+export interface BookingEvent {
+  at: string;
+  status: BookingStatus;
+  note?: string;
+}
+
+/** Một yêu cầu đã lưu. Giá từng dòng được chụp lại lúc nhận, để danh mục đổi giá sau
+ *  không làm sai số liệu cũ. */
+export interface BookingRecord extends Omit<BookingRequest, 'items'> {
+  id: string;
+  receivedAt: string;
+  guests: number;
+  estimate: number;
+  lines: Array<{ key: string; price: number }>;
+  status: BookingStatus;
+  /** Sự kiện đầu tiên luôn là NEW lúc nhận; thêm một dòng mỗi lần đổi trạng thái hoặc ghi chú. */
+  history: BookingEvent[];
+  /** Mail báo admin đã gửi được chưa — gửi hỏng vẫn lưu yêu cầu. */
+  notified: boolean;
+  source: 'web' | 'seed';
+}
+
+/** Giờ từ lúc nhận tới lần xử lý đầu tiên; `undefined` nếu chưa ai đụng tới. */
+export function firstResponseHours(r: BookingRecord): number | undefined {
+  const first = r.history.find((e, i) => i > 0 && e.status !== 'NEW');
+  if (!first) return undefined;
+  return (Date.parse(first.at) - Date.parse(r.receivedAt)) / 3600_000;
+}
+
+export function isOverdue(r: BookingRecord, now: number): boolean {
+  return r.status === 'NEW' && now - Date.parse(r.receivedAt) > SLA_HOURS * 3600_000;
+}

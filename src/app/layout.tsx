@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Be_Vietnam_Pro, IBM_Plex_Mono, Newsreader } from 'next/font/google';
 import Script from 'next/script';
 import './globals.css';
-import AtlasShell from '@/components/AtlasShell';
+import SiteFrame, { PublicOnly } from '@/components/SiteFrame';
 import { CatalogProvider } from '@/components/CatalogProvider';
 import { ItineraryProvider } from '@/components/ItineraryProvider';
 import { PinFocusProvider } from '@/components/PinFocusProvider';
@@ -57,6 +57,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       suppressHydrationWarning
     >
       <head>
+        {/* PublicOnly: không nạp tag đo lường ở /admin (trang có dữ liệu cá nhân của khách). */}
+        <PublicOnly>
         {/* Mieruca Embed Code */}
         <Script
           id="mierucajs"
@@ -84,6 +86,7 @@ var x = document.getElementsByTagName('script')[0];x.parentNode.insertBefore(fjs
 `,
           }}
         />
+        </PublicOnly>
       </head>
       <body>
         {/* Áp theme đã lưu trước khi React hydrate, để không nháy sáng rồi mới đổi màu. */}
@@ -96,7 +99,7 @@ var x = document.getElementsByTagName('script')[0];x.parentNode.insertBefore(fjs
         <CatalogProvider initial={countries}>
           <ItineraryProvider>
             <PinFocusProvider>
-              <AtlasShell>{children}</AtlasShell>
+              <SiteFrame>{children}</SiteFrame>
             </PinFocusProvider>
           </ItineraryProvider>
         </CatalogProvider>

@@ -24,10 +24,11 @@ export const CAT_INCLUDES: Record<Cat, string[]> = {
   PASSAGE: ['Hướng dẫn viên tiếng Việt', 'Toàn bộ vé vào cửa và di chuyển tại điểm', 'Nhóm tối đa mười hai khách'],
 };
 
-export const DEPARTURES: Array<{ date: string; day: string }> = [
-  { date: '09.10', day: 'Thứ 6' },
-  { date: '23.10', day: 'Thứ 6' },
-  { date: '06.11', day: 'Thứ 6' },
+/** `date` là nhãn hiển thị (không có năm); `iso` là ngày thật, dùng cho lịch khởi hành của admin. */
+export const DEPARTURES: Array<{ date: string; day: string; iso: string }> = [
+  { date: '09.10', day: 'Thứ 6', iso: '2026-10-09' },
+  { date: '23.10', day: 'Thứ 6', iso: '2026-10-23' },
+  { date: '06.11', day: 'Thứ 6', iso: '2026-11-06' },
 ];
 
 export interface Experience {

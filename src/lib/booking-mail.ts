@@ -7,7 +7,7 @@ import type { Experience } from './catalog';
 import { CAT_LABEL } from './catalog';
 import type { BookingReceipt, BookingRequest } from './booking';
 import { departureLabel } from './booking';
-import { vnd } from './format';
+import { vnDateTime, vnDayKey, vnd } from './format';
 import type { MailMessage } from './mailer';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? '';
@@ -21,21 +21,9 @@ function escapeHtml(s: string): string {
     .replace(/'/g, '&#39;');
 }
 
-const pad = (n: number) => n.toString().padStart(2, '0');
-
-/** Giờ Việt Nam (UTC+7), không phụ thuộc múi giờ của máy chủ: "29.09.2026 14:05". */
-export function vnTime(iso: string): string {
-  const d = new Date(new Date(iso).getTime() + 7 * 3600_000);
-  return (
-    `${pad(d.getUTCDate())}.${pad(d.getUTCMonth() + 1)}.${d.getUTCFullYear()} ` +
-    `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`
-  );
-}
-
 /** "MT-260929-7K3Q" — ngày nhận (giờ VN) + 4 ký tự ngẫu nhiên, đủ để đọc qua điện thoại. */
 export function bookingId(now: Date): string {
-  const d = new Date(now.getTime() + 7 * 3600_000);
-  const day = `${pad(d.getUTCFullYear() % 100)}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}`;
+  const day = vnDayKey(now).slice(2).replace(/-/g, '');
   const rand = crypto.randomUUID().replace(/-/g, '').slice(0, 4).toUpperCase();
   return `MT-${day}-${rand}`;
 }
@@ -54,7 +42,7 @@ export function composeBookingMail(
 
   const contact: Array<[string, string]> = [
     ['Mã yêu cầu', receipt.id],
-    ['Thời điểm', vnTime(receipt.receivedAt) + ' (giờ VN)'],
+    ['Thời điểm', vnDateTime(receipt.receivedAt) + ' (giờ VN)'],
     ['Họ tên', request.name],
     ['Email', request.email],
     ['Điện thoại', request.phone],
