@@ -2,12 +2,13 @@
   "name": "meridian-travel-atlas",
   "version": "0.1.0",
   "private": true,
-  "description": "Meridian Travel — atlas thương mại du lịch: quả cầu là trang chủ, mỗi cấp zoom là một route.",
+  "description": "Meridian Travel — storefront du lịch: quốc gia → thành phố → địa điểm → trải nghiệm, mỗi cấp một route.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "maps": "node scripts/build-maps.mjs"
   },
   "dependencies": {
     "d3-geo": "^3.1.1",

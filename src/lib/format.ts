@@ -16,7 +16,7 @@ export function vnd(value: number): string {
   return groupThousands(value) + ' ₫';
 }
 
-/** 3900000 -> "3,9 tr" — dùng cho nhãn ghim trên bản đồ, nơi chỗ rất hẹp. */
+/** 3900000 -> "3,9 tr" — cho nhãn gọn ("từ 450k") trên thẻ và ghim bản đồ. */
 export function vndShort(value: number): string {
   if (value >= 1_000_000) {
     const m = value / 1_000_000;
@@ -26,36 +26,16 @@ export function vndShort(value: number): string {
   return groupThousands(value / 1000) + 'k';
 }
 
-/** 1100000 -> "110万₫" — nhãn ghim của bản tiếng Nhật, đếm theo 万 (10.000). */
-export function vndMan(value: number): string {
-  const man = Math.round(value / 10_000).toString();
-  return man.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '万₫';
-}
-
 const decimal = (value: number, digits: number) => value.toFixed(digits).replace('.', ',');
 
-/** Bản tiếng Nhật của coordLabel: "北緯 37.000°  東経 138.200°". */
-export function coordLabelJa([lng, lat]: [number, number]): string {
-  const ns = lat >= 0 ? '北緯' : '南緯';
-  const ew = lng >= 0 ? '東経' : '西経';
-  return `${ns} ${Math.abs(lat).toFixed(3)}°  ${ew} ${Math.abs(lng).toFixed(3)}°`;
+/** "10,26° B · 103,94° Đ" — gọn, cho thẻ thông tin địa điểm. */
+export function coordShort([lng, lat]: [number, number]): string {
+  return `${decimal(Math.abs(lat), 2)}° ${lat >= 0 ? 'B' : 'N'} · ${decimal(Math.abs(lng), 2)}° ${lng >= 0 ? 'Đ' : 'T'}`;
 }
 
-export function coordLabel([lng, lat]: [number, number]): string {
-  const ns = lat >= 0 ? 'B' : 'N'; // Bắc / Nam
-  const ew = lng >= 0 ? 'Đ' : 'T'; // Đông / Tây
-  return `${decimal(Math.abs(lat), 3)}° ${ns}  ${decimal(Math.abs(lng), 3)}° ${ew}`;
-}
-
-/** Một giá trị toạ độ lẻ cho dải số đo, ví dụ "22,82° B". */
-export function degreeLabel(value: number, positive: string, negative: string): string {
-  return `${decimal(Math.abs(value), 2)}° ${value >= 0 ? positive : negative}`;
-}
-
-/** Mẫu số tỉ lệ bản đồ, quy đổi theo 96 dpi: 337 px/rad -> "1:71,0 M". */
-export function scaleLabel(pixelsPerRadian: number): string {
-  const denominator = (6_371_000 / pixelsPerRadian) * 3779.5;
-  return '1:' + (denominator / 1e6).toFixed(1).replace('.', ',') + 'M';
+/** 0.4 -> "Dưới 1 km", 6.2 -> "Khoảng 6 km", 63 -> "Khoảng 63 km". */
+export function kmLabel(km: number): string {
+  return km < 1 ? 'Dưới 1 km' : `Khoảng ${Math.round(km)} km`;
 }
 
 export function ratingLabel(rating: number): string {

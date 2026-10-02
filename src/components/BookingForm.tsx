@@ -41,22 +41,10 @@ interface Props {
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
 }
 
-function Field({
-  field,
-  label,
-  error,
-  children,
-}: {
-  field: BookingField;
-  label: string;
-  error?: string;
-  children: ReactNode;
-}) {
+function Field({ field, label, error, children }: { field: BookingField; label: string; error?: string; children: ReactNode }) {
   return (
     <div className={'field' + (error ? ' invalid' : '')}>
-      <label htmlFor={fieldId(field)} className="mono">
-        {label}
-      </label>
+      <label htmlFor={fieldId(field)}>{label}</label>
       {children}
       {error && (
         <p className="ferr" id={`${fieldId(field)}-err`}>
@@ -86,7 +74,7 @@ function Stepper({
 }) {
   return (
     <div className="field">
-      <span className="mono" id={`${fieldId(field)}-lab`}>
+      <span className="lab" id={`${fieldId(field)}-lab`}>
         {label}
       </span>
       <div className="stepper" role="group" aria-labelledby={`${fieldId(field)}-lab`}>
@@ -100,12 +88,7 @@ function Stepper({
           −
         </button>
         <output aria-live="polite">{value}</output>
-        <button
-          type="button"
-          onClick={() => onChange(value + 1)}
-          disabled={disabled || value >= max}
-          aria-label={`Thêm ${label.toLowerCase()}`}
-        >
+        <button type="button" onClick={() => onChange(value + 1)} disabled={disabled || value >= max} aria-label={`Thêm ${label.toLowerCase()}`}>
           +
         </button>
       </div>
@@ -113,6 +96,7 @@ function Stepper({
   );
 }
 
+/** Form liên hệ của yêu cầu đặt chỗ. Nút gửi nằm ngoài form (khung tóm tắt), nối qua `form={id}`. */
 export default function BookingForm({ id, draft, errors, disabled, onChange, onSubmit }: Props) {
   const aria = (f: BookingField) => ({
     id: fieldId(f),
@@ -126,45 +110,39 @@ export default function BookingForm({ id, draft, errors, disabled, onChange, onS
   ];
 
   return (
-    <form id={id} className="bform" noValidate onSubmit={onSubmit}>
+    <form id={id} className="form" noValidate onSubmit={onSubmit}>
       <fieldset disabled={disabled}>
         <Field field="name" label="Họ và tên" error={errors.name}>
-          <input
-            {...aria('name')}
-            name="name"
-            autoComplete="name"
-            value={draft.name}
-            onChange={(e) => onChange('name', e.target.value)}
-            maxLength={80}
-          />
+          <input {...aria('name')} name="name" autoComplete="name" value={draft.name} onChange={(e) => onChange('name', e.target.value)} maxLength={80} />
         </Field>
 
-        <Field field="email" label="Email" error={errors.email}>
-          <input
-            {...aria('email')}
-            name="email"
-            type="email"
-            autoComplete="email"
-            inputMode="email"
-            value={draft.email}
-            onChange={(e) => onChange('email', e.target.value)}
-            maxLength={120}
-          />
-        </Field>
-
-        <Field field="phone" label="Số điện thoại" error={errors.phone}>
-          <input
-            {...aria('phone')}
-            name="phone"
-            type="tel"
-            autoComplete="tel"
-            inputMode="tel"
-            placeholder="090 123 4567"
-            value={draft.phone}
-            onChange={(e) => onChange('phone', e.target.value)}
-            maxLength={24}
-          />
-        </Field>
+        <div className="pair">
+          <Field field="email" label="Email" error={errors.email}>
+            <input
+              {...aria('email')}
+              name="email"
+              type="email"
+              autoComplete="email"
+              inputMode="email"
+              value={draft.email}
+              onChange={(e) => onChange('email', e.target.value)}
+              maxLength={120}
+            />
+          </Field>
+          <Field field="phone" label="Số điện thoại" error={errors.phone}>
+            <input
+              {...aria('phone')}
+              name="phone"
+              type="tel"
+              autoComplete="tel"
+              inputMode="tel"
+              placeholder="090 123 4567"
+              value={draft.phone}
+              onChange={(e) => onChange('phone', e.target.value)}
+              maxLength={24}
+            />
+          </Field>
+        </div>
 
         <div className="pair">
           <Stepper
@@ -188,16 +166,16 @@ export default function BookingForm({ id, draft, errors, disabled, onChange, onS
         </div>
 
         <div className={'field' + (errors.departure ? ' invalid' : '')}>
-          <span className="mono" id={`${fieldId('departure')}-lab`}>
+          <span className="lab" id={`${fieldId('departure')}-lab`}>
             Ngày khởi hành
           </span>
-          <div className="dates" role="group" aria-labelledby={`${fieldId('departure')}-lab`}>
+          <div className="seg" role="group" aria-labelledby={`${fieldId('departure')}-lab`}>
             {departures.map((d, i) => (
               <button
                 key={d.value}
                 id={i === 0 ? fieldId('departure') : undefined}
                 type="button"
-                className="date"
+                className="press"
                 aria-pressed={draft.departure === d.value}
                 onClick={() => onChange('departure', d.value)}
               >
@@ -224,13 +202,7 @@ export default function BookingForm({ id, draft, errors, disabled, onChange, onS
         <div className="hp" aria-hidden="true">
           <label>
             Website
-            <input
-              name="website"
-              tabIndex={-1}
-              autoComplete="off"
-              value={draft.website}
-              onChange={(e) => onChange('website', e.target.value)}
-            />
+            <input name="website" tabIndex={-1} autoComplete="off" value={draft.website} onChange={(e) => onChange('website', e.target.value)} />
           </label>
         </div>
       </fieldset>

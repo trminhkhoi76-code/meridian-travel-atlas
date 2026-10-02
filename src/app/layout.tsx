@@ -4,24 +4,26 @@ import Script from 'next/script';
 import './globals.css';
 import SiteFrame, { PublicOnly } from '@/components/SiteFrame';
 import { CatalogProvider } from '@/components/CatalogProvider';
-import { ItineraryProvider } from '@/components/ItineraryProvider';
-import { PinFocusProvider } from '@/components/PinFocusProvider';
 import { SessionProvider } from '@/components/SessionProvider';
-import { getCountries } from '@/lib/catalog-service';
-import { toApiCountry } from '@/lib/api';
+import { TripProvider } from '@/components/TripProvider';
+import { UploadProvider } from '@/components/UploadDialog';
 
+// Font duy nhất của giao diện khách.
+const ui = Be_Vietnam_Pro({
+  subsets: ['latin', 'vietnamese'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-ui',
+  display: 'swap',
+});
+
+// Hai font dưới chỉ khu admin còn dùng (tiêu đề, mã số) — không preload để trang
+// khách không phải tải; trình duyệt chỉ tải khi CSS của admin thật sự dùng tới.
 const display = Newsreader({
   subsets: ['latin', 'vietnamese'],
   style: ['normal', 'italic'],
   variable: '--font-display',
   display: 'swap',
-});
-
-const ui = Be_Vietnam_Pro({
-  subsets: ['latin', 'vietnamese'],
-  weight: ['400', '500', '600'],
-  variable: '--font-ui',
-  display: 'swap',
+  preload: false,
 });
 
 const mono = IBM_Plex_Mono({
@@ -29,15 +31,16 @@ const mono = IBM_Plex_Mono({
   weight: ['400', '500'],
   variable: '--font-mono',
   display: 'swap',
+  preload: false,
 });
 
 export const metadata: Metadata = {
   title: {
-    default: 'Meridian Travel — atlas du lịch',
+    default: 'Meridian Travel — trải nghiệm du lịch chọn lọc',
     template: '%s · Meridian Travel',
   },
   description:
-    'Bắt đầu từ quả cầu, cuộn xuống tới từng trải nghiệm: sáu quốc gia, mười tám thành phố, năm mươi tư trải nghiệm có thể đặt trực tiếp.',
+    'Duyệt theo quốc gia, thành phố, địa điểm hay loại trải nghiệm. Lưu vào hành trình rồi gửi một yêu cầu đặt cả chuyến: sáu quốc gia, mười tám thành phố, năm mươi tư trải nghiệm.',
   metadataBase: new URL('https://meridiantravel.example'),
   openGraph: { type: 'website', locale: 'vi_VN', siteName: 'Meridian Travel' },
 };
@@ -45,12 +48,10 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
+  themeColor: '#ffffff',
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const countries = (await getCountries()).map(toApiCountry);
-
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="vi"
@@ -90,20 +91,20 @@ var x = document.getElementsByTagName('script')[0];x.parentNode.insertBefore(fjs
         </PublicOnly>
       </head>
       <body>
-        {/* Áp theme đã lưu trước khi React hydrate, để không nháy sáng rồi mới đổi màu. */}
+        {/* Theme sáng/tối/xanh chỉ còn ở khu admin (ThemeToggle) — áp trước khi React hydrate để không nháy. */}
         <script
           dangerouslySetInnerHTML={{
             __html:
               "try{var t=localStorage.getItem('meridian.theme');if(t&&t!=='system')document.documentElement.setAttribute('data-theme',t);}catch(e){}",
           }}
         />
-        <CatalogProvider initial={countries}>
+        <CatalogProvider>
           <SessionProvider>
-            <ItineraryProvider>
-              <PinFocusProvider>
+            <TripProvider>
+              <UploadProvider>
                 <SiteFrame>{children}</SiteFrame>
-              </PinFocusProvider>
-            </ItineraryProvider>
+              </UploadProvider>
+            </TripProvider>
           </SessionProvider>
         </CatalogProvider>
       </body>

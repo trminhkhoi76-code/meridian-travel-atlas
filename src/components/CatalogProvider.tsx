@@ -1,51 +1,51 @@
 'use client';
 
-import { createContext, useContext, useMemo } from 'react';
-import type { Country, Experience } from '@/lib/catalog';
-import type { ApiCountry } from '@/lib/api';
-import { hydrateCountries } from '@/lib/api';
+import { createContext, useContext } from 'react';
+import type { City, Country, Experience, Place } from '@/lib/catalog';
+import { buildCatalog } from '@/lib/seed';
 
 interface CatalogValue {
   countries: Country[];
   byKey: Map<string, Experience>;
+  places: Map<string, Place>;
+  cities: Map<string, City>;
   totalCities: number;
   totalExperiences: number;
 }
 
-const Ctx = createContext<CatalogValue | null>(null);
-
-export function useCatalog(): CatalogValue {
-  const value = useContext(Ctx);
-  if (!value) throw new Error('useCatalog phải nằm trong <CatalogProvider>');
-  return value;
+/**
+ * Danh mục phía client, dựng một lần từ seed.ts ngay trong bundle JS.
+ *
+ * Vì sao không nhận qua prop từ layout như trước: dữ liệu truyền từ layout bị nhúng
+ * vào payload RSC của MỌI route — kể cả các route Next prefetch ngầm cho từng link
+ * trên màn hình (~45 KB × mỗi link). Nằm trong chunk JS thì trình duyệt tải và cache
+ * đúng một lần. Đổi lại: khi thay seed bằng API thật, phải đổi cả chỗ này (tải
+ * /api/countries một lần rồi cache), không chỉ catalog-service.ts.
+ */
+function build(): CatalogValue {
+  const countries = buildCatalog();
+  const byKey = new Map<string, Experience>();
+  const places = new Map<string, Place>();
+  const cities = new Map<string, City>();
+  let totalExperiences = 0;
+  for (const country of countries) {
+    for (const city of country.cities) {
+      cities.set(city.key, city);
+      totalExperiences += city.experiences.length;
+      for (const experience of city.experiences) byKey.set(experience.key, experience);
+      for (const place of city.places) places.set(place.key, place);
+    }
+  }
+  return { countries, byKey, places, cities, totalCities: cities.size, totalExperiences };
 }
 
-/**
- * Nhận danh mục đã lấy từ API phía server (layout.tsx) rồi dựng lại thành
- * cây Country/City/Experience có tham chiếu ngược tới cha, dùng chung cho
- * mọi client component (quả cầu, hành trình, mục lục...).
- */
-export function CatalogProvider({
-  initial,
-  children,
-}: {
-  initial: ApiCountry[];
-  children: React.ReactNode;
-}) {
-  const value = useMemo<CatalogValue>(() => {
-    const countries = hydrateCountries(initial);
-    const byKey = new Map<string, Experience>();
-    let totalCities = 0;
-    let totalExperiences = 0;
-    for (const country of countries) {
-      totalCities += country.cities.length;
-      for (const city of country.cities) {
-        totalExperiences += city.experiences.length;
-        for (const experience of city.experiences) byKey.set(experience.key, experience);
-      }
-    }
-    return { countries, byKey, totalCities, totalExperiences };
-  }, [initial]);
+const CATALOG = build();
+const Ctx = createContext<CatalogValue>(CATALOG);
 
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+export function useCatalog(): CatalogValue {
+  return useContext(Ctx);
+}
+
+export function CatalogProvider({ children }: { children: React.ReactNode }) {
+  return <Ctx.Provider value={CATALOG}>{children}</Ctx.Provider>;
 }

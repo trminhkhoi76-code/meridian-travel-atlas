@@ -14,8 +14,8 @@
  */
 
 import { buildCatalog } from './seed';
-import type { City, Country, Experience } from './catalog';
-import { findCity, findCountry, findExperience } from './catalog';
+import type { City, Country, Experience, Place } from './catalog';
+import { allExperiences, findCity, findCountry, findPlace } from './catalog';
 
 let cache: Country[] | null = null;
 
@@ -37,14 +37,19 @@ export async function getCity(countrySlug: string, citySlug: string): Promise<Ci
   return findCity(country, citySlug);
 }
 
-export async function getExperience(
-  countrySlug: string,
-  citySlug: string,
-  experienceSlug: string,
-): Promise<Experience | undefined> {
-  const country = findCountry(await all(), countrySlug);
-  const city = findCity(country, citySlug);
-  return findExperience(city, experienceSlug);
+export async function getPlace(countrySlug: string, citySlug: string, placeSlug: string): Promise<Place | undefined> {
+  return findPlace(await getCity(countrySlug, citySlug), placeSlug);
+}
+
+/** Trải nghiệm theo slug — slug là duy nhất toàn danh mục (seed.ts kiểm tra lúc build). */
+export async function getExperience(slug: string): Promise<Experience | undefined> {
+  return allExperiences(await all()).find((e) => e.slug === slug);
+}
+
+/** URL cũ `/<quốc gia>/<thành phố>/<trải nghiệm>` — chỉ để redirect sang `/trai-nghiem/<slug>`. */
+export async function getExperienceIn(citySlugPath: { country: string; city: string }, slug: string) {
+  const city = await getCity(citySlugPath.country, citySlugPath.city);
+  return city?.experiences.find((e) => e.slug === slug);
 }
 
 let byKey: Map<string, Experience> | null = null;
@@ -54,17 +59,13 @@ export async function getExperienceIndex(): Promise<Map<string, Experience>> {
   if (!byKey) {
     // Dựng xong rồi mới gán: các lời gọi song song (Promise.all) không được thấy map dở dang.
     const map = new Map<string, Experience>();
-    for (const country of await all()) {
-      for (const city of country.cities) {
-        for (const experience of city.experiences) map.set(experience.key, experience);
-      }
-    }
+    for (const experience of allExperiences(await all())) map.set(experience.key, experience);
     byKey = map;
   }
   return byKey;
 }
 
-/** Tra theo `Experience.key` — dùng khi client gửi lên danh sách khoá (hành trình). */
+/** Tra theo `Experience.key` — dùng khi client gửi lên danh sách khoá (giỏ hàng). */
 export async function getExperienceByKey(key: string): Promise<Experience | undefined> {
   return (await getExperienceIndex()).get(key);
 }

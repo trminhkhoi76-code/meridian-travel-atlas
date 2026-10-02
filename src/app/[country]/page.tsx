@@ -1,13 +1,16 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { hrefOf } from '@/lib/catalog';
 import { getCountries, getCountry } from '@/lib/catalog-service';
-import { coordLabel, vnd } from '@/lib/format';
+import { countryMap } from '@/lib/maps';
+import CountryView from '@/components/CountryView';
 
 interface Props {
   params: Promise<{ country: string }>;
 }
+
+// Mọi quốc gia đều prerender; slug lạ là 404 ngay, không render động.
+export const dynamicParams = false;
 
 export async function generateStaticParams() {
   return (await getCountries()).map((country) => ({ country: country.slug }));
@@ -23,61 +26,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function CountryPanel({ params }: Props) {
+export default async function CountryPage({ params }: Props) {
   const country = await getCountry((await params).country);
   if (!country) notFound();
-
-  const experiences = country.cities.reduce((n, city) => n + city.experiences.length, 0);
-
-  return (
-    <div className="pbody">
-      <Link href={hrefOf.world()} className="back">
-        ← Thế giới
-      </Link>
-      <p className="mono">{coordLabel(country.coord)}</p>
-      <h1 className="ptitle">{country.name}</h1>
-      <p className="pnative">{country.native}</p>
-      <p className="pdesc">{country.blurb}</p>
-
-      <dl className="meta">
-        <div>
-          <dt className="mono">Mùa đẹp nhất</dt>
-          <dd>{country.season}</dd>
-        </div>
-        <div>
-          <dt className="mono">Đường bay</dt>
-          <dd>{country.flight}</dd>
-        </div>
-        <div>
-          <dt className="mono">Thị thực</dt>
-          <dd>{country.visa}</dd>
-        </div>
-        <div>
-          <dt className="mono">Tiền tệ</dt>
-          <dd>{country.currency}</dd>
-        </div>
-      </dl>
-
-      <div className="sechead">
-        <span className="mono">
-          {country.cities.length} thành phố · {experiences} trải nghiệm
-        </span>
-        <span className="mono">Giá từ</span>
-      </div>
-      <div className="rows">
-        {country.cities.map((city) => (
-          <Link key={city.key} href={hrefOf.city(city)} className="row">
-            <span className="txt">
-              <b>{city.name}</b>
-              <small>{city.blurb}</small>
-            </span>
-            <span className="pr">
-              <b>{vnd(city.from)}</b>
-              <small>{city.experiences.length} trải nghiệm</small>
-            </span>
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
+  return <CountryView country={country} map={countryMap(country)} />;
 }

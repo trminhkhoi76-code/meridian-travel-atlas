@@ -4,20 +4,10 @@ import { ACCESS_COOKIE, ACCOUNT_PATHS, LOGIN_PATH, REFRESH_COOKIE, isFresh } fro
 import type { CookieSpec } from '@/lib/auth-service';
 import { AuthServiceError, CLEARED_COOKIES, cookieAttributes, me, refresh, tokenCookies } from '@/lib/auth-service';
 
-/**
- * `skipTrailingSlashRedirect` trong next.config.ts tắt chuẩn hoá dấu gạch chéo cuối cho
- * TOÀN bộ app, nhưng chỗ duy nhất cần giữ nguyên dấu gạch chéo là ca #4 của bộ repro —
- * ở đó `…/v1.2` và `…/v1.2/` phải là hai URL riêng, cùng trả 200.
- *
- * Mọi đường dẫn khác được dựng lại đúng cú 308 mà Next vẫn tự làm, để mỗi level của
- * atlas vẫn chỉ có một URL chính tắc.
- */
-const KEEP_TRAILING_SLASH = '/url-match/04-dot';
-
 const ADMIN_PATH = /^\/(api\/)?admin(\/|$)/;
 
 /**
- * Chỉ làm mới phiên ở các route dynamic. Trang atlas prerender tĩnh và có thể bị CDN
+ * Chỉ làm mới phiên ở các route dynamic. Trang khách prerender tĩnh và có thể bị CDN
  * cache: gắn Set-Cookie vào đó là có nguy cơ phát cookie của khách này cho khách khác.
  * SessionProvider gọi /api/session ngay khi mount, nên phiên vẫn được giữ sống.
  */
@@ -93,17 +83,6 @@ function withCookies(response: NextResponse, updates: CookieSpec[]): NextRespons
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
-  if (pathname.startsWith(KEEP_TRAILING_SLASH)) return NextResponse.next();
-
-  if (pathname.length > 1 && pathname.endsWith('/')) {
-    // Phải dựng URL mới từ `request.url` chứ không clone `nextUrl`: khi
-    // `skipTrailingSlashRedirect` bật, nextUrl gắn lại dấu gạch chéo lúc serialize
-    // nên redirect trỏ về chính nó và vòng vô hạn.
-    const target = new URL(`${pathname.replace(/\/+$/, '')}${request.nextUrl.search}`, request.url);
-    return NextResponse.redirect(target, 308);
-  }
-
   if (!needsSession(pathname)) return NextResponse.next();
 
   const session = await renewSession(request);
@@ -121,5 +100,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|geo/|favicon.ico).*)'],
+  matcher: ['/((?!_next/static|_next/image|maps/|favicon.ico).*)'],
 };

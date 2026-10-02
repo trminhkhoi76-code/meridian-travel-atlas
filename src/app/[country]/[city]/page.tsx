@@ -1,14 +1,16 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { hrefOf } from '@/lib/catalog';
 import { getCity, getCountries } from '@/lib/catalog-service';
-import { coordLabel } from '@/lib/format';
-import CityExperienceRows from '@/components/CityExperienceRows';
+import { cityMap } from '@/lib/maps';
+import CityExplorer from '@/components/CityExplorer';
+import Crumbs from '@/components/Crumbs';
 
 interface Props {
   params: Promise<{ country: string; city: string }>;
 }
+
+export const dynamicParams = false;
 
 export async function generateStaticParams() {
   return (await getCountries()).flatMap((country) =>
@@ -27,37 +29,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function CityPanel({ params }: Props) {
+/** Cấp 2 · Thành phố. */
+export default async function CityPage({ params }: Props) {
   const { country: countrySlug, city: citySlug } = await params;
   const city = await getCity(countrySlug, citySlug);
   if (!city) notFound();
-  const country = city.country;
-
-  const rows = city.experiences.map((experience) => ({
-    key: experience.key,
-    href: hrefOf.experience(experience),
-    title: experience.title,
-    cat: experience.cat,
-    duration: experience.duration,
-    price: experience.price,
-    rating: experience.rating,
-    reviews: experience.reviews,
-  }));
 
   return (
-    <div className="pbody">
-      <Link href={hrefOf.country(country)} className="back">
-        ← {country.name}
-      </Link>
-      <p className="mono">{coordLabel(city.coord)}</p>
-      <h1 className="ptitle">{city.name}</h1>
-      <p className="pdesc">{city.blurb}</p>
-
-      <div className="sechead">
-        <span className="mono">{city.experiences.length} trải nghiệm</span>
-        <span className="mono">Mỗi khách</span>
-      </div>
-      <CityExperienceRows rows={rows} />
-    </div>
+    <main className="container page">
+      <Crumbs
+        items={[
+          { label: 'Trang chủ', href: '/' },
+          { label: city.country.name, href: hrefOf.country(city.country) },
+          { label: city.name },
+        ]}
+      />
+      <CityExplorer cityKey={city.key} map={cityMap(city)} />
+    </main>
   );
 }

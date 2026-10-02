@@ -1,50 +1,48 @@
-# Meridian Travel — Atlas du lịch
+# Meridian Travel
 
-Một storefront du lịch mà trang chủ là quả cầu. Chọn một điểm đến, quả cầu quay và zoom tới đó; đi
-sâu thêm thì hiện các thành phố, rồi từng trải nghiệm, rồi trang đặt chỗ — bốn cấp, cùng một mặt phẳng.
+Storefront du lịch cho khách Việt: duyệt theo quốc gia, thành phố, địa điểm hay loại trải nghiệm;
+lưu vào hành trình chia theo ngày; rồi gửi một yêu cầu đặt chỗ cho cả chuyến. Bản đồ chỉ hỗ trợ:
+ghim đặt theo toạ độ thật trên đường bờ biển vẽ sẵn.
 
 ```bash
 npm install
 npm run dev     # http://localhost:3000
 ```
 
-## Cách dùng
-
-| Hành động | Kết quả |
-|---|---|
-| Cuộn xuống / xuống | Đi sâu vào điểm đến đang hướng về giữa tầm nhìn |
-| Cuộn lên / lên / `Esc` | Trồi lên một cấp |
-| Kéo chuột | Xoay quả cầu |
-| Bấm ghim, bấm vào đất liền, hoặc bấm trong mục lục | Vào thẳng nơi đó |
-
-Bốn cấp tương ứng bốn đường dẫn — copy được, chia sẻ được, và Google đọc được:
+## Các trang
 
 ```
-/                                            quỹ đạo — 6 quốc gia
-/nhat-ban                                    quốc gia — 3 thành phố
-/nhat-ban/kyoto                              thành phố — 3 trải nghiệm
-/nhat-ban/kyoto/ryokan-arashiyama            trải nghiệm — giá, ngày khởi hành, đặt chỗ
-/hanh-trinh                                  giỏ hàng
+/                                         trang chủ — tìm, danh mục, quốc gia, đánh giá cao, ảnh cộng đồng
+/viet-nam                                 quốc gia — thành phố, trải nghiệm (lọc theo danh mục), ảnh, hành trình mẫu
+/viet-nam/phu-quoc                        thành phố — danh sách địa điểm + bản đồ
+/viet-nam/phu-quoc/bai-ong-lang           địa điểm — toạ độ thật, trải nghiệm tại đây và gần đây, ảnh khách
+/trai-nghiem/bungalow-bai-ong-lang        trải nghiệm — ngày khởi hành, số khách, thêm vào giỏ / hành trình
+/danh-muc/luu-tru                         danh mục — lọc theo quốc gia, khoảng giá, đánh giá
+/thu-vien-anh                             thư viện ảnh cộng đồng, đăng ảnh
+/hanh-trinh                               hành trình theo ngày, tuyến trên bản đồ, chi phí
+/gio-hang                                 giỏ hàng → thông tin liên hệ → gửi yêu cầu
+/tim-kiem?q=                              tìm không phân biệt dấu
 ```
+
+URL cũ của trải nghiệm (`/viet-nam/phu-quoc/bungalow-bai-ong-lang`) tự chuyển (308) sang
+`/trai-nghiem/…`. Danh mục: 6 quốc gia · 18 thành phố · 57 địa điểm · 54 trải nghiệm, prerender tĩnh.
 
 ## Kiến trúc ngắn gọn
 
-- **`src/components/AtlasShell.tsx`** — quả cầu (canvas 2D + `d3-geo` phép chiếu orthographic), ghim,
-  thanh trên, mục lục, và khung `.panel` để các trang rót nội dung vào. Nằm trong `layout.tsx` nên
-  không bị unmount khi chuyển route.
-- **`src/lib/route.ts`** — đọc pathname ra `{ level, country, city, experience }`. Máy ảnh suy ra từ
-  đây, nên URL chính là trạng thái zoom.
-- **`src/lib/catalog.ts`** — toàn bộ danh mục: 6 quốc gia · 18 thành phố · 54 trải nghiệm, kèm toạ
-  độ thật, giá VND, mùa đẹp nhất, đường bay và thị thực.
-- **`src/app/**/page.tsx`** — mỗi cấp một trang, prerender tĩnh (83 route), có `generateMetadata` và
-  JSON-LD `Product` cho trang trải nghiệm.
+- **`src/lib/seed.ts`** — dữ liệu mẫu; **`catalog.ts`** — kiểu dữ liệu và đường dẫn.
+- **`scripts/build-maps.mjs`** (`npm run maps`) — vẽ sẵn bản đồ thành phố/quốc gia/thế giới từ
+  Natural Earth (`world-atlas@2.0.2`). Trình duyệt không tải thư viện bản đồ nào.
+- **`src/lib/trip.ts`** + `TripProvider` — hành trình và giỏ hàng, lưu ở localStorage.
+- Đặt chỗ gửi tới `POST /api/booking-requests` (giả lập; admin xem ở `/admin`).
 
-Hình thể bản đồ: `world-atlas@2.0.2` — bản 110m cho cấp thế giới, bản 50m tải thêm khi zoom sâu.
+Chi tiết cho người phát triển: [CLAUDE.md](CLAUDE.md).
 
 ## Thiết kế
 
-Giấy dó ấm, biển xanh nhạt, đất liền màu cát, nhấn bằng đỏ sơn mài; chữ Newsreader (tên địa danh),
-Be Vietnam Pro (giao diện), IBM Plex Mono (số đo). Có cả giao diện sáng và tối.
+"Bản đồ ban ngày": nền sáng, chữ navy, teal cho hành động, cam hoàng hôn cho tín hiệu; một font
+Be Vietnam Pro. Chuyển động bằng CSS (hiện dần khi cuộn, nhấc thẻ khi rê chuột), tắt khi hệ điều
+hành bật "giảm chuyển động". Có bố cục riêng cho điện thoại (thanh tab dưới, bản đồ thành phố dính
+trên và danh sách trượt lên).
 
 ## Tài khoản
 
@@ -56,5 +54,5 @@ cho tài khoản `ROLE_ADMIN`.
 
 ## Còn thiếu
 
-Ảnh thật (hiện là dải màu theo phân loại), thanh toán, quên mật khẩu / xác thực email, và zoom tới
-mức đường phố — muốn sâu hơn ~1:6M thì phải chuyển sang raster tiles + mercator.
+Ảnh thật và kho lưu ảnh (thư viện hiện là ảnh mẫu; đăng ảnh bị khoá trên production), thanh toán,
+nhiều hành trình / chia sẻ hành trình, quên mật khẩu / xác thực email, và bản đồ mức đường phố.

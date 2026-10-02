@@ -1,18 +1,25 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import AtlasShell from './AtlasShell';
+import SiteFooter from './SiteFooter';
+import SiteHeader from './SiteHeader';
 
 export const isAdminPath = (pathname: string) => pathname === '/admin' || pathname.startsWith('/admin/');
 
 /**
- * Chọn khung theo đường dẫn: mọi trang khách nằm trong AtlasShell (quả cầu
- * không unmount khi chuyển route), còn /admin có layout riêng, không quả cầu.
+ * Chọn khung theo đường dẫn: trang khách có header, thanh tab (điện thoại) và
+ * footer; /admin có layout riêng (app/admin/layout.tsx).
  */
 export default function SiteFrame({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   if (isAdminPath(pathname)) return <>{children}</>;
-  return <AtlasShell>{children}</AtlasShell>;
+  return (
+    <>
+      <SiteHeader />
+      {children}
+      <SiteFooter />
+    </>
+  );
 }
 
 /**

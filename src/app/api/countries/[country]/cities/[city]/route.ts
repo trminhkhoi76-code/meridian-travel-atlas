@@ -5,7 +5,7 @@ interface Params {
   params: Promise<{ country: string; city: string }>;
 }
 
-/** GET /api/countries/:country/cities/:city — chi tiết một thành phố, gồm trải nghiệm. */
+/** GET /api/countries/:country/cities/:city — chi tiết một thành phố, gồm địa điểm và trải nghiệm. */
 export async function GET(_req: Request, { params }: Params) {
   const { country: countrySlug, city: citySlug } = await params;
   const city = await getCity(countrySlug, citySlug);

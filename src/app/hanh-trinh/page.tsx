@@ -1,12 +1,16 @@
 import type { Metadata } from 'next';
-import ItineraryPanel from '@/components/ItineraryPanel';
+import TripPlanner from '@/components/TripPlanner';
 
 export const metadata: Metadata = {
-  title: 'Hành trình của bạn',
-  description: 'Các trải nghiệm đã chọn, tạm tính và gửi yêu cầu đặt chỗ.',
+  title: 'Hành trình',
+  description: 'Xếp các thành phố, địa điểm và trải nghiệm đã lưu theo ngày, xem tuyến đường và chi phí.',
   robots: { index: false },
 };
 
 export default function ItineraryPage() {
-  return <ItineraryPanel />;
+  return (
+    <main className="container page">
+      <TripPlanner />
+    </main>
+  );
 }

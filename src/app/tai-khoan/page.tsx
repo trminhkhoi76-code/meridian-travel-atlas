@@ -37,57 +37,56 @@ export default async function AccountPage() {
   const role = user?.role ?? session.role;
 
   return (
-    <>
-      <div className="pbody">
-        <Link href={hrefOf.world()} className="back">
-          ← Thế giới
-        </Link>
-        <h1 className="ptitle sm">Tài khoản</h1>
-        <p className="pdesc">
-          Email này được điền sẵn khi bạn gửi yêu cầu đặt chỗ ở{' '}
-          <Link href={hrefOf.itinerary()}>Hành trình</Link>.
-        </p>
-
-        {!user && (
-          <p className="formerr" role="status">
-            Chưa lấy được thông tin mới nhất từ máy chủ — đang hiển thị dữ liệu đã lưu.
-          </p>
-        )}
-
-        <dl className="meta">
-          <div className="wide">
-            <dt className="mono">Email</dt>
-            <dd>{email}</dd>
+    <main className="container">
+      <div className="narrow">
+        <div className="panel panel-pad enter">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <h1 className="title-m" style={{ fontSize: 32 }}>
+              Tài khoản
+            </h1>
+            <p className="muted">
+              Email này được điền sẵn khi bạn gửi yêu cầu đặt chỗ ở <Link href={hrefOf.cart()}>Giỏ hàng</Link>.
+            </p>
           </div>
-          <div>
-            <dt className="mono">Vai trò</dt>
-            <dd>{ROLE_LABEL[role]}</dd>
-          </div>
-          <div>
-            <dt className="mono">Thành viên từ</dt>
-            <dd>{user ? vnDate(user.createdAt) : '—'}</dd>
-          </div>
-        </dl>
 
-        {role === 'ROLE_ADMIN' && (
-          <p>
-            <a href="/admin" className="btn ghost">
-              Vào khu quản trị →
-            </a>
-          </p>
-        )}
-      </div>
+          {!user && (
+            <p className="formerr" role="status">
+              Chưa lấy được thông tin mới nhất từ máy chủ — đang hiển thị dữ liệu đã lưu.
+            </p>
+          )}
 
-      <div className="pfoot">
-        <div className="amt">
-          <span className="mono">Đang đăng nhập</span>
+          <dl className="facts two">
+            <div style={{ gridColumn: '1 / -1' }}>
+              <dt>Email</dt>
+              <dd>{email}</dd>
+            </div>
+            <div>
+              <dt>Vai trò</dt>
+              <dd>{ROLE_LABEL[role]}</dd>
+            </div>
+            <div>
+              <dt>Thành viên từ</dt>
+              <dd>{user ? vnDate(user.createdAt) : '—'}</dd>
+            </div>
+          </dl>
+
+          <div className="actions">
+            {role === 'ROLE_ADMIN' && (
+              <a href="/admin" className="btn-d press">
+                Vào khu quản trị →
+              </a>
+            )}
+            <Link href={hrefOf.itinerary()} className="btn-s press">
+              Hành trình của tôi
+            </Link>
+            <form action={logoutAction}>
+              <button type="submit" className="btn-s press">
+                Đăng xuất
+              </button>
+            </form>
+          </div>
         </div>
-        <form action={logoutAction}>
-          <button type="submit" className="btn ghost">
-            Đăng xuất
-          </button>
-        </form>
       </div>
-    </>
+    </main>
   );
 }
