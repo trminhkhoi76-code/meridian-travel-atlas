@@ -6,6 +6,22 @@ frontend:
         - npm ci
     build:
       commands:
+        # Amplify chỉ đưa biến môi trường vào lúc build — server SSR (middleware, route
+        # handler) lúc chạy không thấy chúng. Cách AWS hướng dẫn cho Next.js SSR: ghi ra
+        # .env.production trước `next build`. Next đọc file đó bằng dotenv: `#` cắt chuỗi
+        # và `$` bị expand (kể cả trong ngoặc), nên giá trị lạ bị chặn ở đây thay vì để
+        # mật khẩu bị cắt ngắn trong im lặng. Không bao giờ in giá trị ra log build.
+        - |
+          for k in AUTH_SERVICE_URL BOOKING_ADMIN_EMAIL; do
+            v="$(printenv "$k" || true)"
+            [ -z "$v" ] && continue
+            if ! printf '%s' "$v" | grep -Eq '^[A-Za-z0-9._~+/=@,:-]+$'; then
+              echo "$k chứa ký tự không dùng được trong .env — chỉ dùng A-Z a-z 0-9 . _ ~ + / = @ , : -"
+              exit 1
+            fi
+            printf '%s=%s\n' "$k" "$v" >> .env.production
+            echo "$k -> .env.production"
+          done
         - npm run build
   artifacts:
     baseDirectory: .next

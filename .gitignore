@@ -5,6 +5,8 @@ build/
 next-env.d.ts
 *.tsbuildinfo
 .env*.local
+# amplify.yml ghi biến server (có mật khẩu admin) ra đây lúc build — không bao giờ commit.
+.env.production
 .DS_Store
 
 # Terraform

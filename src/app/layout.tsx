@@ -2,10 +2,11 @@ import type { Metadata, Viewport } from 'next';
 import { Be_Vietnam_Pro, IBM_Plex_Mono, Newsreader } from 'next/font/google';
 import Script from 'next/script';
 import './globals.css';
-import AtlasShell from '@/components/AtlasShell';
+import SiteFrame, { PublicOnly } from '@/components/SiteFrame';
 import { CatalogProvider } from '@/components/CatalogProvider';
 import { ItineraryProvider } from '@/components/ItineraryProvider';
 import { PinFocusProvider } from '@/components/PinFocusProvider';
+import { SessionProvider } from '@/components/SessionProvider';
 import { getCountries } from '@/lib/catalog-service';
 import { toApiCountry } from '@/lib/api';
 
@@ -46,7 +47,6 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
 };
-// 149456490 - 1428893104
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const countries = (await getCountries()).map(toApiCountry);
@@ -58,13 +58,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       suppressHydrationWarning
     >
       <head>
+        {/* PublicOnly: không nạp tag đo lường ở /admin (trang có dữ liệu cá nhân của khách). */}
+        <PublicOnly>
         {/* Mieruca Embed Code */}
         <Script
           id="mierucajs"
           strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
-window.__fid = window.__fid || [];__fid.push([551802805]);
+window.__fid = window.__fid || [];__fid.push([149456490]);
 (function() {
 function mieruca(){if(typeof window.__fjsld != "undefined") return; window.__fjsld = 1; var fjs = document.createElement('script'); fjs.type = 'text/javascript'; fjs.async = true; fjs.id = "fjssync"; var timestamp = new Date;fjs.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://hm.mieru-ca.com/service/js/mieruca-hm.js?v='+ timestamp.getTime(); var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(fjs, x); };
 setTimeout(mieruca, 500); document.readyState != "complete" ? (window.attachEvent ? window.attachEvent("onload", mieruca) : window.addEventListener("load", mieruca, false)) : mieruca();
@@ -78,13 +80,14 @@ setTimeout(mieruca, 500); document.readyState != "complete" ? (window.attachEven
           strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
-window.__optimizeid = window.__optimizeid || [];__optimizeid.push([1506201978]);
+window.__optimizeid = window.__optimizeid || [];__optimizeid.push([1428893104]);
 (function () {var fjs = document.createElement('script');fjs.type = 'text/javascript';
 fjs.async = true;fjs.id = "fjssync";var timestamp = new Date;fjs.src = 'https://opt.mieru-ca.com/service/js/mieruca-optimize.js?v=' + timestamp.getTime();
 var x = document.getElementsByTagName('script')[0];x.parentNode.insertBefore(fjs, x);})();
 `,
           }}
         />
+        </PublicOnly>
       </head>
       <body>
         {/* Áp theme đã lưu trước khi React hydrate, để không nháy sáng rồi mới đổi màu. */}
@@ -95,11 +98,13 @@ var x = document.getElementsByTagName('script')[0];x.parentNode.insertBefore(fjs
           }}
         />
         <CatalogProvider initial={countries}>
-          <ItineraryProvider>
-            <PinFocusProvider>
-              <AtlasShell>{children}</AtlasShell>
-            </PinFocusProvider>
-          </ItineraryProvider>
+          <SessionProvider>
+            <ItineraryProvider>
+              <PinFocusProvider>
+                <SiteFrame>{children}</SiteFrame>
+              </PinFocusProvider>
+            </ItineraryProvider>
+          </SessionProvider>
         </CatalogProvider>
       </body>
     </html>

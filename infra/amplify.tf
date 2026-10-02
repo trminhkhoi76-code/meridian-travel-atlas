@@ -8,9 +8,16 @@ resource "aws_amplify_app" "this" {
   repository   = var.repository_url
   access_token = var.github_access_token
 
-  environment_variables = {
-    NEXT_PUBLIC_API_BASE_URL = var.api_base_url
-  }
+  # Danh sách này là độc quyền: biến thêm tay trong Amplify Console sẽ bị xoá ở lần
+  # apply sau — khai báo mọi biến ở đây. Biến không phải NEXT_PUBLIC_* chỉ tới được
+  # server SSR nhờ bước ghi .env.production trong amplify.yml.
+  environment_variables = merge(
+    {
+      NEXT_PUBLIC_API_BASE_URL = var.api_base_url
+      AUTH_SERVICE_URL         = var.auth_service_url
+    },
+    var.booking_admin_email == "" ? {} : { BOOKING_ADMIN_EMAIL = var.booking_admin_email },
+  )
 }
 
 resource "aws_amplify_branch" "main" {

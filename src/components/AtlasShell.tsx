@@ -9,6 +9,7 @@ import { hrefOf } from '@/lib/catalog';
 import {
   EXPERIENCE_OFFSETS,
   LEVEL_FACTOR,
+  boxDistance,
   clamp,
   easeCubicInOut,
   loadGeometry,
@@ -21,6 +22,7 @@ import { JA_COUNTRY, JA_UI } from '@/lib/ja';
 import { useCatalog } from './CatalogProvider';
 import { useItinerary } from './ItineraryProvider';
 import { usePinFocus } from './PinFocusProvider';
+import AccountLink from './AccountLink';
 import Crumb from './Crumb';
 import IndexRail from './IndexRail';
 import ThemeToggle from './ThemeToggle';
@@ -29,6 +31,8 @@ const SPHERE: GeoSphere = { type: 'Sphere' };
 const GRATICULE = geoGraticule10();
 const FLY_MS = 1150;
 const WHEEL_STEP = 170;
+/** Lề (px) quanh khung hình khi cắt hình học, để nét viền ở mép không bị hụt. */
+const CLIP_PAD = 8;
 
 interface Pin {
   key: string;
@@ -103,6 +107,10 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
   const countriesRef = useRef(COUNTRIES);
   const hoveredRef = useRef(hovered);
   const reduced = useRef(false);
+  // Chỉ vẽ lại khi có gì đổi: ngoài lúc bay, kéo và tự xoay ở world, vòng lặp
+  // bỏ qua frame trừ khi cờ này bật. Mọi thứ đổi hình (máy ảnh, kích thước,
+  // màu, dữ liệu vừa tải, ghim, hover) phải bật nó.
+  const dirty = useRef(true);
   const [ready, setReady] = useState(false);
   // Trên di động, hero + panel là overlay toàn chiều rộng, che gần hết quả
   // cầu — cho phép thu gọn từng khối để lộ bản đồ. Chỉ có tác dụng ≤860px.
@@ -166,6 +174,12 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
 
   pins.current = pinList;
 
+  // Ghim mới mount với class "off" cho tới khi placePins đặt vị trí; nhãn
+  // "peek" theo dòng đang hover cũng chỉ đổi trong placePins.
+  useEffect(() => {
+    dirty.current = true;
+  }, [pinList, hovered]);
+
   /* --------------------------------- vẽ ------------------------------------ */
 
   const projection = useMemo(() => geoOrthographic().precision(0.3), []);
@@ -188,6 +202,7 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
       water: get('--terrain-water', FALLBACK.water),
       peak: get('--ink-3', FALLBACK.peak),
     };
+    dirty.current = true;
   }, []);
 
   const layout = useCallback(() => {
@@ -213,11 +228,19 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
       base: nextBase,
       limit: sidePanel && panel ? panel.left - 12 : w - 12,
     };
+    // Cắt hình học theo khung hình: ở cấp thành phố quả cầu rộng gấp vài lần
+    // màn hình, không cắt thì canvas vẫn phải dựng cả phần nằm ngoài.
+    projection.clipExtent([
+      [-CLIP_PAD, -CLIP_PAD],
+      [w + CLIP_PAD, h + CLIP_PAD],
+    ]);
     if (!fly.current) {
       camera.current.scale = nextBase * LEVEL_FACTOR[routeRef.current.level];
     }
+    // Gán lại canvas.width xoá trắng canvas, nên luôn phải vẽ lại.
+    dirty.current = true;
     setBase((prev) => (Math.abs(prev - nextBase) > 0.5 ? nextBase : prev));
-  }, []);
+  }, [projection]);
 
   /* ------------------------------ chuyển cảnh ------------------------------ */
 
@@ -247,6 +270,7 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
       if (immediate || reduced.current) {
         camera.current = { rot: [lon, target.rot[1]], scale: target.scale };
         fly.current = null;
+        dirty.current = true;
         return;
       }
       fly.current = {
@@ -315,6 +339,8 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
         const width = entry.borderBoxSize?.[0]?.inlineSize || entry.contentRect.width;
         if (key && width) labelWidth.current.set(key, width);
       }
+      // Bề rộng nhãn quyết định lật trái/phải và ẩn nhãn chồng nhau.
+      dirty.current = true;
     });
     return () => {
       widthObserver.current?.disconnect();
@@ -341,6 +367,11 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
     const path = geoPath(projection, ctx);
     let raf = 0;
     let frame = 0;
+    // Ở world quả cầu tự xoay, nên đó là cấp duy nhất phải vẽ mọi frame.
+    const spinning = () => {
+      const r = routeRef.current;
+      return r.level === 'world' && !r.isItinerary && !drag.current && !reduced.current;
+    };
     const readouts = new Map<string, HTMLElement | null>();
 
     const paintReadout = () => {
@@ -429,15 +460,27 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
         ];
         camera.current.scale = f.s0 * Math.pow(f.s1 / f.s0, e);
         if (t >= 1) fly.current = null;
-      } else if (r.level === 'world' && !r.isItinerary && !drag.current && !reduced.current) {
+      } else if (spinning()) {
         camera.current.rot[0] += 0.028;
       }
-      if (wheel.current) wheel.current *= 0.9;
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, w, h);
       projection.rotate(camera.current.rot).scale(camera.current.scale).translate([cx, cy]);
       const radius = camera.current.scale;
+
+      // Một điểm cách tâm góc θ hiện ở bán kính radius·sin θ, nên chỉ những gì
+      // trong góc `sight` mới có thể lọt vào khung hình. Bỏ qua phần còn lại
+      // trước khi đưa cho d3: bản 50m có ~83k điểm, ở cấp thành phố chỉ vài
+      // nghìn điểm thật sự nằm trên màn hình.
+      const centre: [number, number] = [-camera.current.rot[0], -camera.current.rot[1]];
+      const reach = Math.max(
+        Math.hypot(cx, cy),
+        Math.hypot(w - cx, cy),
+        Math.hypot(cx, h - cy),
+        Math.hypot(w - cx, h - cy),
+      ) + CLIP_PAD * 2;
+      const sight = (reach >= radius ? Math.PI / 2 : Math.asin(reach / radius)) + 0.01;
 
       // đại dương
       ctx.beginPath();
@@ -458,9 +501,13 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
       const geo = r.level === 'world' ? geometry.current.lo ?? geometry.current.hi : geometry.current.hi ?? geometry.current.lo;
       if (geo) {
         const selected = r.country ? geo.byId.get(r.country.id) : undefined;
+        const inSight = (shape: (typeof geo.land.features)[number]) => {
+          const box = geo.boxes.get(shape);
+          return !box || boxDistance(box, centre) <= sight;
+        };
 
         ctx.beginPath();
-        path(geo.land);
+        for (const shape of geo.land.features) if (inSight(shape)) path(shape);
         ctx.fillStyle = selected ? p.landDim : p.land;
         ctx.fill();
 
@@ -470,7 +517,7 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
         for (const country of countriesRef.current) {
           if (r.country?.id === country.id) continue;
           const shape = geo.byId.get(country.id);
-          if (shape) {
+          if (shape && inSight(shape)) {
             path(shape);
             hasSold = true;
           }
@@ -483,7 +530,7 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
         ctx.save();
         ctx.globalAlpha = selected ? 0.4 : 0.75;
         ctx.beginPath();
-        path(geo.borders);
+        for (const { line, box } of geo.borderLines) if (boxDistance(box, centre) <= sight) path(line);
         ctx.strokeStyle = p.bord;
         ctx.lineWidth = 0.6;
         ctx.stroke();
@@ -520,7 +567,6 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
         ctx.stroke();
         ctx.restore();
 
-        const centre: [number, number] = [-camera.current.rot[0], -camera.current.rot[1]];
         ctx.fillStyle = p.peak;
         for (const peak of t.peaks.features) {
           const coord = peak.geometry.coordinates as [number, number];
@@ -564,11 +610,19 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
       ctx.stroke();
 
       placePins();
-      if (++frame % 8 === 0) paintReadout();
+      // Đang chuyển động thì 8 frame mới ghi số đo một lần; vừa dừng thì ghi
+      // ngay, vì có thể sẽ không còn frame nào nữa.
+      const moving = fly.current || drag.current || spinning();
+      if (++frame % 8 === 0 || !moving) paintReadout();
     };
 
     const loop = () => {
-      render();
+      if (dirty.current || fly.current || spinning()) {
+        dirty.current = false;
+        render();
+      }
+      // Tách khỏi render: khi đứng yên không vẽ nữa, lượng cuộn dư vẫn phải tắt dần.
+      if (wheel.current) wheel.current *= 0.9;
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -595,12 +649,14 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
       d.moved = Math.max(d.moved, Math.abs(dx) + Math.abs(dy));
       if (!fly.current) {
         camera.current.rot = [d.rot[0] + dx * k, clamp(d.rot[1] - dy * k, -85, 85)];
+        dirty.current = true;
       }
     };
 
     const onPointerUp = (event: PointerEvent) => {
       const dragged = drag.current && drag.current.moved > 5;
       drag.current = null;
+      dirty.current = true;
       canvas.classList.remove('dragging');
       if (dragged || fly.current) return;
 
@@ -620,6 +676,7 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
 
     const onPointerCancel = () => {
       drag.current = null;
+      dirty.current = true;
       canvas.classList.remove('dragging');
     };
 
@@ -683,6 +740,7 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
       .then((g) => {
         if (!alive) return;
         geometry.current.lo = g;
+        dirty.current = true;
         setReady(true);
       })
       .catch(() => undefined);
@@ -702,6 +760,7 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
     loadGeometry('/geo/countries-50m.json')
       .then((g) => {
         geometry.current.hi = g;
+        dirty.current = true;
       })
       .catch(() => {
         hiRequested.current = false;
@@ -717,6 +776,7 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
     loadTerrain('/geo/terrain-50m.json')
       .then((t) => {
         terrain.current = t;
+        dirty.current = true;
       })
       .catch(() => {
         terrainRequested.current = false;
@@ -798,6 +858,7 @@ export default function AtlasShell({ children }: { children: React.ReactNode }) 
         </Link>
         <Crumb route={route} />
         <ThemeToggle lang={route.lang} />
+        <AccountLink lang={route.lang} />
         <Link href={hrefOf.itinerary()} className={'cart' + (keys.length ? ' on' : '')}>
           {ja ? JA_UI.itinerary : 'Hành trình'} <b>{keys.length}</b>
         </Link>

@@ -46,7 +46,15 @@ Hình thể bản đồ: `world-atlas@2.0.2` — bản 110m cho cấp thế gi�
 Giấy dó ấm, biển xanh nhạt, đất liền màu cát, nhấn bằng đỏ sơn mài; chữ Newsreader (tên địa danh),
 Be Vietnam Pro (giao diện), IBM Plex Mono (số đo). Có cả giao diện sáng và tối.
 
+## Tài khoản
+
+`/dang-ky`, `/dang-nhap`, `/tai-khoan` dùng auth-service (repo `meridian-backend/auth-service`).
+Server Next.js gọi tới qua `AUTH_SERVICE_URL`, token nằm trong cookie HttpOnly. Ở dev, mặc định
+gọi `http://localhost:8080`, nên hãy chạy auth-service local (xem README của auth-service) hoặc
+đặt `AUTH_SERVICE_URL=http://auth-service.meridian-travel.org` trong `.env.local`. `/admin` chỉ mở
+cho tài khoản `ROLE_ADMIN`.
+
 ## Còn thiếu
 
-Ảnh thật (hiện là dải màu theo phân loại), thanh toán, đăng nhập, và zoom tới mức đường phố — muốn
-sâu hơn ~1:6M thì phải chuyển sang raster tiles + mercator.
+Ảnh thật (hiện là dải màu theo phân loại), thanh toán, quên mật khẩu / xác thực email, và zoom tới
+mức đường phố — muốn sâu hơn ~1:6M thì phải chuyển sang raster tiles + mercator.

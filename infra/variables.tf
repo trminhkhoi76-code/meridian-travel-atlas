@@ -42,3 +42,26 @@ variable "api_base_url" {
   type        = string
   default     = ""
 }
+
+variable "auth_service_url" {
+  description = <<-EOT
+    Gốc URL của auth-service (repo meridian-backend/auth-service), không có dấu / cuối.
+    Chỉ server Next.js gọi tới (đăng nhập, làm mới token, kiểm ROLE_ADMIN cho /admin) —
+    trình duyệt không gọi thẳng. Thiếu biến này thì production không đăng nhập được và
+    /admin trả 503.
+  EOT
+  type        = string
+  default     = "http://auth-service.meridian-travel.org"
+
+  validation {
+    # amplify.yml chỉ chép các ký tự an toàn với dotenv ra .env.production.
+    condition     = can(regex("^https?://[A-Za-z0-9.:/_~+=@,-]*[A-Za-z0-9._~+=@,:-]$", var.auth_service_url))
+    error_message = "auth_service_url phải là http(s)://… không có dấu / cuối, và không chứa #, $, khoảng trắng."
+  }
+}
+
+variable "booking_admin_email" {
+  description = "Hộp thư nhận mail báo yêu cầu đặt chỗ; nhiều địa chỉ ngăn bằng dấu phẩy."
+  type        = string
+  default     = ""
+}
