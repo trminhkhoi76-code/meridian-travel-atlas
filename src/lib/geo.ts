@@ -1,6 +1,7 @@
+import { geoBounds, geoDistance } from 'd3-geo';
 import { feature, mesh } from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
-import type { Feature, FeatureCollection, MultiLineString, Geometry, Point } from 'geojson';
+import type { Feature, FeatureCollection, LineString, MultiLineString, Geometry, Point } from 'geojson';
 
 export type Level = 'world' | 'country' | 'city' | 'experience';
 
@@ -19,10 +20,17 @@ export const LEVEL_LABEL: Record<Level, string> = {
   experience: '03 / TRẢI NGHIỆM',
 };
 
+/** Hộp bao kinh/vĩ độ như `geoBounds` trả về; x0 > x1 nghĩa là hộp vắt qua kinh tuyến 180. */
+export type GeoBox = [[number, number], [number, number]];
+
 export interface WorldGeometry {
   land: FeatureCollection<Geometry, { name: string }>;
   borders: MultiLineString;
   byId: Map<string, Feature<Geometry, { name: string }>>;
+  /** Hộp bao của từng feature trong `land`, để bỏ qua nước nằm ngoài khung nhìn khi vẽ. */
+  boxes: Map<Feature, GeoBox>;
+  /** `borders` tách thành từng đoạn kèm hộp bao, cùng lý do với `boxes`. */
+  borderLines: Array<{ line: LineString; box: GeoBox }>;
 }
 
 type CountryTopology = Topology<{ countries: GeometryCollection<{ name: string }> }>;
@@ -58,7 +66,43 @@ export function buildGeometry(topology: CountryTopology): WorldGeometry {
     } as Geometry;
   }
 
-  return { land, borders, byId };
+  // Tính sau khi gộp, để hộp của feature đã gộp phủ cả các mảnh đảo.
+  const boxes = new Map<Feature, GeoBox>(land.features.map((f) => [f, geoBounds(f) as GeoBox]));
+  const borderLines = borders.coordinates.map((coordinates) => {
+    const line: LineString = { type: 'LineString', coordinates };
+    return { line, box: geoBounds(line) as GeoBox };
+  });
+
+  return { land, borders, byId, boxes, borderLines };
+}
+
+/** Lệch kinh độ a − b, quy về [-180, 180]. */
+const lonDelta = (a: number, b: number) => ((((a - b) % 360) + 540) % 360) - 180;
+
+/**
+ * Khoảng cách góc (radian) ngắn nhất từ `centre` tới một điểm bất kỳ trong hộp.
+ * Chính xác chứ không xấp xỉ: điểm gần nhất nằm trên cạnh kinh tuyến gần nhất,
+ * hoặc ở điểm dừng atan2(tan φ, cos Δλ) kẹp vào khoảng vĩ độ, hoặc ở một trong
+ * hai mép vĩ độ (khi Δλ > 90° điểm dừng đó lại là điểm xa nhất).
+ */
+export function boxDistance(box: GeoBox, centre: [number, number]): number {
+  const [[x0, y0], [x1, y1]] = box;
+  if (x0 > x1) {
+    return Math.min(boxDistance([[x0, y0], [180, y1]], centre), boxDistance([[-180, y0], [x1, y1]], centre));
+  }
+  const lon = lonDelta(centre[0], 0);
+  const lat = centre[1];
+  if (lon >= x0 && lon <= x1) {
+    return lat < y0 ? (y0 - lat) * (Math.PI / 180) : lat > y1 ? (lat - y1) * (Math.PI / 180) : 0;
+  }
+  const edge = Math.abs(lonDelta(lon, x0)) <= Math.abs(lonDelta(lon, x1)) ? x0 : x1;
+  const dLon = lonDelta(edge, lon) * (Math.PI / 180);
+  const stationary = (Math.atan2(Math.tan(lat * (Math.PI / 180)), Math.cos(dLon)) * 180) / Math.PI;
+  return Math.min(
+    geoDistance([edge, clamp(stationary, y0, y1)], [lon, lat]),
+    geoDistance([edge, y0], [lon, lat]),
+    geoDistance([edge, y1], [lon, lat]),
+  );
 }
 
 export async function loadGeometry(url: string): Promise<WorldGeometry> {
