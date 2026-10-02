@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { logoutAction } from '@/app/tai-khoan/actions';
-import ThemeToggle from '../ThemeToggle';
+import { Logo } from '../Icons';
 
 const LINKS = [
   { href: '/admin', label: 'Tổng quan' },
@@ -18,8 +18,10 @@ export default function AdminNav({ overdue, email }: { overdue: number; email?: 
 
   return (
     <nav className="anav" aria-label="Quản trị">
-      <Link href="/admin" className="brand">
-        Meridian<em>Quản trị</em>
+      <Link href="/admin" className="logo">
+        <Logo />
+        <b>Meridian</b>
+        <span className="anav-tag">Quản trị</span>
       </Link>
       <ul>
         {LINKS.map((l) => (
@@ -36,12 +38,9 @@ export default function AdminNav({ overdue, email }: { overdue: number; email?: 
         ))}
       </ul>
       <div className="anav-foot">
-        <ThemeToggle />
         {email && (
           <form action={logoutAction} className="anav-user">
-            <span className="mono" title={email}>
-              {email}
-            </span>
+            <span title={email}>{email}</span>
             <button type="submit">Đăng xuất</button>
           </form>
         )}

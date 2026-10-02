@@ -146,20 +146,6 @@ export const IconInfo = (p: P) => (
     <path d="M12 8 V8.2" />
   </S>
 );
-export const IconShield = (p: P) => (
-  <S {...p}>
-    <path d="M12 3 L19 6 V11.5 C19 15.8 16 19 12 21 C8 19 5 15.8 5 11.5 V6 Z" />
-    <path d="M9 12 L11.2 14.2 L15 10.2" />
-  </S>
-);
-export const IconUsers = (p: P) => (
-  <S {...p}>
-    <circle cx="9" cy="8" r="3.2" />
-    <path d="M3.5 19 C3.5 15.5 6 13.5 9 13.5 C12 13.5 14.5 15.5 14.5 19" />
-    <circle cx="16.5" cy="9" r="2.6" />
-    <path d="M16 13.6 C18.6 13.6 20.5 15.6 20.5 18.5" />
-  </S>
-);
 export const IconCalendar = (p: P) => (
   <S {...p}>
     <rect x="4" y="5.5" width="16" height="14" rx="2" />

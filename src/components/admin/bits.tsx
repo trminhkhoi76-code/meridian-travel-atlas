@@ -26,9 +26,9 @@ export function FilterLinks({
 }) {
   return (
     <div className="frow" role="group" aria-label={label}>
-      <span className="mono">{label}</span>
+      <span className="kicker">{label}</span>
       {options.map((o) => (
-        <Link key={o.href} href={o.href} className="chip" aria-current={o.on ? 'true' : undefined}>
+        <Link key={o.href} href={o.href} className="pill sm" aria-current={o.on ? 'true' : undefined}>
           {o.label}
         </Link>
       ))}

@@ -4,7 +4,7 @@
  */
 
 import type { Experience } from './catalog';
-import { CAT_LABEL } from './catalog';
+import { CAT_LABEL, hrefOf } from './catalog';
 import type { BookingReceipt, BookingRequest } from './booking';
 import { departureLabel } from './booking';
 import { vnDateTime, vnDayKey, vnd } from './format';
@@ -28,7 +28,7 @@ export function bookingId(now: Date): string {
   return `MT-${day}-${rand}`;
 }
 
-const experienceUrl = (e: Experience) => `${SITE_URL}/${e.country.slug}/${e.city.slug}/${e.slug}`;
+const experienceUrl = (e: Experience) => SITE_URL + hrefOf.experience(e);
 
 export function composeBookingMail(
   to: string[],
@@ -72,32 +72,32 @@ export function composeBookingMail(
 
   const cell = 'padding:6px 12px 6px 0;vertical-align:top';
   const html = `<!doctype html>
-<html lang="vi"><body style="font-family:-apple-system,'Segoe UI',sans-serif;font-size:14px;color:#1f1b17;line-height:1.5">
-<h2 style="font-weight:500;margin:0 0 12px">Yêu cầu đặt chỗ mới · ${escapeHtml(receipt.id)}</h2>
+<html lang="vi"><body style="font-family:-apple-system,'Segoe UI',sans-serif;font-size:14px;color:#0f1b2d;line-height:1.5">
+<h2 style="font-weight:700;margin:0 0 12px">Yêu cầu đặt chỗ mới · ${escapeHtml(receipt.id)}</h2>
 <table style="border-collapse:collapse;margin:0 0 18px">
 ${contact
   .map(
     ([k, v]) =>
-      `<tr><td style="${cell};color:#6c6459">${escapeHtml(k)}</td><td style="${cell}">${escapeHtml(v)}</td></tr>`,
+      `<tr><td style="${cell};color:#45536a">${escapeHtml(k)}</td><td style="${cell}">${escapeHtml(v)}</td></tr>`,
   )
   .join('\n')}
 </table>
-<h3 style="font-weight:500;margin:0 0 6px">Hành trình · ${lines.length} dòng</h3>
+<h3 style="font-weight:600;margin:0 0 6px">Hành trình · ${lines.length} dòng</h3>
 <table style="border-collapse:collapse;margin:0 0 12px">
 ${lines
   .map(
     (e) =>
-      `<tr><td style="${cell}"><a href="${escapeHtml(experienceUrl(e))}" style="color:#c2492b">${escapeHtml(e.title)}</a><br>` +
-      `<small style="color:#6c6459">${escapeHtml(`${CAT_LABEL[e.cat]} · ${e.city.name}, ${e.country.name} · ${e.duration}`)}</small></td>` +
+      `<tr><td style="${cell}"><a href="${escapeHtml(experienceUrl(e))}" style="color:#0b6b74">${escapeHtml(e.title)}</a><br>` +
+      `<small style="color:#45536a">${escapeHtml(`${CAT_LABEL[e.cat]} · ${e.city.name}, ${e.country.name} · ${e.duration}`)}</small></td>` +
       `<td style="${cell};text-align:right;white-space:nowrap">${escapeHtml(vnd(e.price))}/khách</td></tr>`,
   )
   .join('\n')}
 </table>
 <p style="margin:0 0 18px"><b>Tạm tính: ${escapeHtml(vnd(receipt.estimate))}</b>
-<span style="color:#6c6459"> (${escapeHtml(vnd(perGuest))}/khách × ${receipt.guests} khách)</span></p>
-<h3 style="font-weight:500;margin:0 0 6px">Ghi chú của khách</h3>
-<p style="margin:0 0 18px;white-space:pre-wrap">${request.note ? escapeHtml(request.note) : '<i style="color:#9b9284">(không có)</i>'}</p>
-<p style="color:#9b9284;font-size:12px">Trả lời mail này để phản hồi trực tiếp cho khách. Cam kết xác nhận trong 24 giờ.</p>
+<span style="color:#45536a"> (${escapeHtml(vnd(perGuest))}/khách × ${receipt.guests} khách)</span></p>
+<h3 style="font-weight:600;margin:0 0 6px">Ghi chú của khách</h3>
+<p style="margin:0 0 18px;white-space:pre-wrap">${request.note ? escapeHtml(request.note) : '<i style="color:#5e6b7f">(không có)</i>'}</p>
+<p style="color:#5e6b7f;font-size:12px">Trả lời mail này để phản hồi trực tiếp cho khách. Cam kết xác nhận trong 24 giờ.</p>
 </body></html>`;
 
   return {

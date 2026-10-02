@@ -90,7 +90,7 @@ export default async function DepartureSchedule({ searchParams }: Props) {
             <h2>Chưa chốt ngày · {s.flexible.length}</h2>
             <p>Khách chọn &ldquo;Linh hoạt&rdquo; — cần tư vấn ngày trước khi xếp lịch</p>
           </div>
-          <Link href="/admin/yeu-cau?khoi-hanh=linh-hoat" className="chip">
+          <Link href="/admin/yeu-cau?khoi-hanh=linh-hoat" className="pill sm">
             Mở trong danh sách
           </Link>
         </header>

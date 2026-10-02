@@ -29,14 +29,14 @@ function Buttons({ status, pick }: { status: BookingStatus; pick: (s: BookingSta
           type="submit"
           name="status"
           value={s}
-          className={'btn' + (s === 'CANCELLED' ? ' ghost' : '')}
+          className={s === 'CANCELLED' ? 'btn-s btn-sm' : 'btn-p btn-sm'}
           disabled={pending}
           onClick={() => pick(s)}
         >
           {status === 'CANCELLED' && s === 'CONTACTED' ? 'Mở lại yêu cầu' : (VERB[s] ?? STATUS_LABEL[s])}
         </button>
       ))}
-      <button type="submit" className="btn ghost" disabled={pending} onClick={() => pick('')}>
+      <button type="submit" className="btn-s btn-sm" disabled={pending} onClick={() => pick('')}>
         Chỉ lưu ghi chú
       </button>
     </div>
@@ -52,7 +52,7 @@ export default function BookingActions({ id, status }: { id: string; status: Boo
       <input type="hidden" name="id" value={id} />
       <input type="hidden" name="intent" ref={intent} defaultValue="" />
       <label>
-        <span className="mono">Ghi chú nội bộ · khách không thấy</span>
+        <span className="kicker">Ghi chú nội bộ · khách không thấy</span>
         <textarea
           key={state.version}
           name="note"

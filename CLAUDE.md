@@ -129,13 +129,13 @@ needs object storage + a moderation queue.
 Dashboard, request list and detail (status changes, internal notes, CSV export), a Gantt of
 departures, and per-experience performance. Layout and CSS live in `app/admin/` and nowhere else.
 
-- **Own tokens, own frame, no tracking tags.** [SiteFrame](src/components/SiteFrame.tsx) skips the
-  site header/footer under `/admin`, and `PublicOnly` wraps the Mieruca tags in `app/layout.tsx`,
-  because admin pages show customer names, emails and phones. The tag *content* stays in
-  `layout.tsx`. The admin's colour tokens (with light/dark/blue themes and
-  [ThemeToggle](src/components/ThemeToggle.tsx)) live at the top of `admin.css`, scoped to
-  `.admin`, so restyling the storefront never changes the admin. Its fonts (Newsreader, IBM Plex
-  Mono) are loaded with `preload: false` so storefront pages don't download them.
+- **Same design system, own frame, no tracking tags.** [SiteFrame](src/components/SiteFrame.tsx)
+  skips the site header/footer under `/admin`, and `PublicOnly` wraps the Mieruca tags in
+  `app/layout.tsx`, because admin pages show customer names, emails and phones. The tag *content*
+  stays in `layout.tsx`. The admin uses the storefront's tokens, font and components (`.btn-p/-s`,
+  `.pill`, `.kicker`, `.formerr`, `.logo`). `admin.css` only adds admin layout (sidebar, KPI tiles,
+  tables, charts, Gantt) plus the `--viz-*` / `--st-*` chart colours. One light palette, no theme
+  switcher.
 - **Only `ROLE_ADMIN` accounts get in.** The middleware asks auth-service (`/api/users/me`) on
   every `/admin` and `/api/admin` request, because the FE cannot verify the JWT signature and the
   role in the token may be stale. No session: pages 303 to `/dang-nhap?next=…`, APIs get 401.
@@ -147,6 +147,12 @@ departures, and per-experience performance. Layout and CSS live in `app/admin/` 
   `.env.production` before the build. Add any new server variable to that loop. Values must stay
   within `A-Z a-z 0-9 . _ ~ + / = @ , : -`, because dotenv truncates at `#` and expands `$`.
   See [infra/README.md](infra/README.md). `NEXT_PUBLIC_*` variables are inlined at build time.
+- **HTML must not outlive a deploy on the CDN.** Amplify's CloudFront keys its cache on the
+  `Accept` header too, so each browser gets its own copy, and a copy cached during a deploy
+  switch-over survived the invalidation: Chrome kept showing the old UI until a click forced a
+  hard navigation. Hence `revalidate = 300` in `app/layout.tsx` plus `expireTime: 3600` in
+  `next.config.ts` (`s-maxage=300, stale-while-revalidate=3300` instead of one year). Don't
+  remove them to "make pages fully static".
 - **The store is a mock, in memory.** It holds ~190 days of seeded requests
   ([booking-seed.ts](src/lib/booking-seed.ts), deterministic PRNG, anchored to server start) plus
   real submissions. It is cached on `globalThis` so it survives HMR, but it is lost on restart,
@@ -156,10 +162,10 @@ departures, and per-experience performance. Layout and CSS live in `app/admin/` 
   and days are VN calendar days (UTC+7, via `vnDayKey()` in `format.ts`). `DEPARTURES[].iso` gives
   the Gantt real dates.
 - **Charts are hand-rolled** in [components/admin/](src/components/admin/charts.tsx), with no
-  chart library. Colours are the `--viz-*` / `--st-*` tokens in `admin.css`, checked with the
-  dataviz palette validator against `#ffffff` and `#1c1917`. Never put text on a `--viz-1` fill:
-  neither white nor ink reaches 4.5:1, which is why Gantt labels sit outside the bar. Every chart
-  has a table view.
+  chart library. Colours are the `--viz-*` / `--st-*` tokens in `admin.css`: `--viz-1` is the
+  site teal (6.2:1 on the white card), the ordinal funnel steps are a teal ramp, and status colours
+  always come with an icon and a label. Gantt labels sit outside the bar. Every chart has a table
+  view.
 - In the booking detail, status buttons also write the choice into a hidden `intent` input on
   click. React sets the pending state before building `FormData`, and a disabled submitter's
   `name/value` is dropped.
@@ -199,8 +205,9 @@ Customers sign up and log in at `/dang-ky`, `/dang-nhap` and `/tai-khoan`. Crede
   `Intl` — server and client must produce byte-identical strings or hydration breaks. VND uses `.`
   for thousands, `,` for decimals.
 - **Design tokens** are the `:root` variables at the top of [globals.css](src/app/globals.css)
-  (ink/teal/sunset/sea…, from the design's "Nền tảng" board). Class names avoid the ones admin.css
-  defines globally (`.btn`, `.chip`, `.mono`, `.on`…) — the storefront uses `.btn-p/-s/-d`, `.pill`.
+  (ink/teal/sunset/sea…, from the design's "Nền tảng" board), shared by the storefront and the
+  admin. admin.css stays in the document after a client-side navigation away from `/admin`, so its
+  class names must not collide with storefront ones.
 - **Motion**: CSS only. Scroll-linked effects use `animation-timeline` (no scroll listeners),
   only opacity/transform are animated, and `prefers-reduced-motion` turns everything off.
   Re-running an entrance animation after a filter change = change the list's `key`.

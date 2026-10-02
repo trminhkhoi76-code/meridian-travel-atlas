@@ -35,7 +35,7 @@ export default async function BookingList({ searchParams }: Props) {
   return (
     <>
       <PageHead title="Yêu cầu đặt chỗ" sub={`${num(rows.length)} yêu cầu khớp bộ lọc · mới nhất trước`}>
-        <a className="chip" href={`/admin/yeu-cau/csv?${query}`} download>
+        <a className="pill sm" href={`/admin/yeu-cau/csv?${query}`} download>
           Xuất CSV
         </a>
       </PageHead>
@@ -44,11 +44,11 @@ export default async function BookingList({ searchParams }: Props) {
       <form className="ffilters" method="get" action="/admin/yeu-cau">
         <AutoSubmit />
         <label>
-          <span className="mono">Tìm</span>
+          <span className="kicker">Tìm</span>
           <input type="search" name="q" defaultValue={filter.q} placeholder="Mã, tên, email, SĐT" />
         </label>
         <label>
-          <span className="mono">Trạng thái</span>
+          <span className="kicker">Trạng thái</span>
           <select name="trang-thai" defaultValue={filter.status ?? ''}>
             <option value="">Tất cả</option>
             <option value="OVERDUE">Quá hạn 24 giờ</option>
@@ -60,7 +60,7 @@ export default async function BookingList({ searchParams }: Props) {
           </select>
         </label>
         <label>
-          <span className="mono">Điểm đến</span>
+          <span className="kicker">Điểm đến</span>
           <select name="nuoc" defaultValue={filter.country ?? ''}>
             <option value="">Tất cả</option>
             {countries.map((c) => (
@@ -71,7 +71,7 @@ export default async function BookingList({ searchParams }: Props) {
           </select>
         </label>
         <label>
-          <span className="mono">Khởi hành</span>
+          <span className="kicker">Khởi hành</span>
           <select name="khoi-hanh" defaultValue={filter.departure ?? ''}>
             <option value="">Tất cả</option>
             {DEPARTURES.map((d) => (
@@ -82,11 +82,11 @@ export default async function BookingList({ searchParams }: Props) {
             <option value={FLEXIBLE_DEPARTURE}>Linh hoạt</option>
           </select>
         </label>
-        <button type="submit" className="btn">
+        <button type="submit" className="btn-p btn-sm">
           Lọc
         </button>
         {query && (
-          <Link href="/admin/yeu-cau" className="chip">
+          <Link href="/admin/yeu-cau" className="pill sm">
             Bỏ lọc
           </Link>
         )}
@@ -151,7 +151,7 @@ export default async function BookingList({ searchParams }: Props) {
       {pages > 1 && (
         <nav className="pager" aria-label="Phân trang">
           {page > 1 ? <Link href={pageHref(page - 1)}>← Trước</Link> : <span />}
-          <span className="mono">
+          <span className="kicker">
             Trang {page} / {pages}
           </span>
           {page < pages ? <Link href={pageHref(page + 1)}>Sau →</Link> : <span />}

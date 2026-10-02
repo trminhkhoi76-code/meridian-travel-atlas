@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Be_Vietnam_Pro, IBM_Plex_Mono, Newsreader } from 'next/font/google';
+import { Be_Vietnam_Pro } from 'next/font/google';
 import Script from 'next/script';
 import './globals.css';
 import SiteFrame, { PublicOnly } from '@/components/SiteFrame';
@@ -8,7 +8,7 @@ import { SessionProvider } from '@/components/SessionProvider';
 import { TripProvider } from '@/components/TripProvider';
 import { UploadProvider } from '@/components/UploadDialog';
 
-// Font duy nhất của giao diện khách.
+// Font duy nhất của cả site, kể cả khu admin.
 const ui = Be_Vietnam_Pro({
   subsets: ['latin', 'vietnamese'],
   weight: ['400', '500', '600', '700'],
@@ -16,23 +16,9 @@ const ui = Be_Vietnam_Pro({
   display: 'swap',
 });
 
-// Hai font dưới chỉ khu admin còn dùng (tiêu đề, mã số) — không preload để trang
-// khách không phải tải; trình duyệt chỉ tải khi CSS của admin thật sự dùng tới.
-const display = Newsreader({
-  subsets: ['latin', 'vietnamese'],
-  style: ['normal', 'italic'],
-  variable: '--font-display',
-  display: 'swap',
-  preload: false,
-});
-
-const mono = IBM_Plex_Mono({
-  subsets: ['latin', 'vietnamese'],
-  weight: ['400', '500'],
-  variable: '--font-mono',
-  display: 'swap',
-  preload: false,
-});
+// Mọi trang khách thành ISR 5 phút, để HTML trên CDN không sống lâu hơn một bản deploy
+// (xem `expireTime` trong next.config.ts). Nội dung tĩnh nên render lại cũng y hệt.
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: {
@@ -53,11 +39,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="vi"
-      className={`${display.variable} ${ui.variable} ${mono.variable}`}
-      suppressHydrationWarning
-    >
+    <html lang="vi" className={ui.variable}>
       <head>
         {/* PublicOnly: không nạp tag đo lường ở /admin (trang có dữ liệu cá nhân của khách). */}
         <PublicOnly>
@@ -91,13 +73,6 @@ var x = document.getElementsByTagName('script')[0];x.parentNode.insertBefore(fjs
         </PublicOnly>
       </head>
       <body>
-        {/* Theme sáng/tối/xanh chỉ còn ở khu admin (ThemeToggle) — áp trước khi React hydrate để không nháy. */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html:
-              "try{var t=localStorage.getItem('meridian.theme');if(t&&t!=='system')document.documentElement.setAttribute('data-theme',t);}catch(e){}",
-          }}
-        />
         <CatalogProvider>
           <SessionProvider>
             <TripProvider>

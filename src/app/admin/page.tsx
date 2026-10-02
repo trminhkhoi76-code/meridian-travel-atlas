@@ -140,7 +140,7 @@ export default async function AdminDashboard({ searchParams }: Props) {
               <h2>Trải nghiệm dẫn đầu</h2>
               <p>Theo giá trị tạm tính trong kỳ</p>
             </div>
-            <Link href={`/admin/danh-muc?ky=${days}`} className="chip">
+            <Link href={`/admin/danh-muc?ky=${days}`} className="pill sm">
               Cả danh mục
             </Link>
           </header>
@@ -179,7 +179,7 @@ export default async function AdminDashboard({ searchParams }: Props) {
               <h2>Cần liên hệ</h2>
               <p>Quá {SLA_HOURS} giờ chưa phản hồi, cũ nhất trước</p>
             </div>
-            <Link href="/admin/yeu-cau?trang-thai=OVERDUE" className="chip">
+            <Link href="/admin/yeu-cau?trang-thai=OVERDUE" className="pill sm">
               Tất cả
             </Link>
           </header>

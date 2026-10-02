@@ -13,9 +13,9 @@ export const metadata: Metadata = {
 };
 
 /**
- * Khu quản trị: không quả cầu (SiteFrame bỏ AtlasShell ở /admin), không tag đo
- * lường. Middleware chỉ cho tài khoản ROLE_ADMIN của auth-service vào tới đây.
- * `body` của site khoá cuộn (quả cầu chiếm trọn màn hình), nên `.admin` tự cuộn.
+ * Khu quản trị: không header/footer của trang khách (SiteFrame bỏ qua /admin), không
+ * tag đo lường. Middleware chỉ cho tài khoản ROLE_ADMIN của auth-service vào tới đây.
+ * Dùng chung token và nút/pill của globals.css; admin.css chỉ thêm bố cục riêng.
  */
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const now = Date.now();
@@ -26,7 +26,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="admin">
       <AdminNav overdue={overdue} email={session?.email} />
       <main className="amain">
-        <p className="amock mono">
+        <p className="amock">
           Kho giả lập trong bộ nhớ · dữ liệu mẫu + yêu cầu gửi từ lúc máy chủ khởi động · khởi động lại là mất
         </p>
         {children}

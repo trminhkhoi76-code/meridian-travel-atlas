@@ -79,7 +79,7 @@ export default function Gantt({ data }: { data: Schedule }) {
       <div className="gantt" style={{ ['--day-w' as string]: `${dayW}px` }}>
         <div className="g-scroll" ref={scrollRef}>
           <div className="g-grid" style={{ gridTemplateColumns: `var(--g-label) ${timelineW}px` }}>
-            <div className="g-corner mono" ref={cornerRef}>
+            <div className="g-corner kicker" ref={cornerRef}>
               Trải nghiệm
             </div>
             <div className="g-head">

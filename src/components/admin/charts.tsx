@@ -50,7 +50,7 @@ export function ChartCard({
         </div>
         <button
           type="button"
-          className="chip"
+          className="pill sm"
           aria-pressed={asTable}
           onClick={() => setAsTable((v) => !v)}
         >

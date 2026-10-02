@@ -62,11 +62,11 @@ export default async function BookingDetail({ params }: Props) {
             </header>
             <dl className="adl">
               <div>
-                <dt className="mono">Họ tên</dt>
+                <dt className="kicker">Họ tên</dt>
                 <dd>{record.name}</dd>
               </div>
               <div>
-                <dt className="mono">Email</dt>
+                <dt className="kicker">Email</dt>
                 <dd>
                   <a href={`mailto:${record.email}?subject=${encodeURIComponent(`Meridian Travel · ${record.id}`)}`}>
                     {record.email}
@@ -74,23 +74,23 @@ export default async function BookingDetail({ params }: Props) {
                 </dd>
               </div>
               <div>
-                <dt className="mono">Điện thoại</dt>
+                <dt className="kicker">Điện thoại</dt>
                 <dd>
                   <a href={`tel:${record.phone}`}>{record.phone}</a>
                 </dd>
               </div>
               <div>
-                <dt className="mono">Số khách</dt>
+                <dt className="kicker">Số khách</dt>
                 <dd>
                   {record.adults} người lớn{record.children ? `, ${record.children} trẻ em` : ''}
                 </dd>
               </div>
               <div>
-                <dt className="mono">Khởi hành</dt>
+                <dt className="kicker">Khởi hành</dt>
                 <dd>{departureLabel(record.departure)}</dd>
               </div>
               <div className="wide">
-                <dt className="mono">Ghi chú của khách</dt>
+                <dt className="kicker">Ghi chú của khách</dt>
                 <dd className="pre">{record.note || '—'}</dd>
               </div>
             </dl>
@@ -166,7 +166,7 @@ export default async function BookingDetail({ params }: Props) {
                 .reverse()
                 .map(({ e, i, label }) => (
                   <li key={i}>
-                    <span className="mono">{vnDateTime(e.at)}</span>
+                    <span className="kicker">{vnDateTime(e.at)}</span>
                     <b>{label}</b>
                     {e.note && <p>{e.note}</p>}
                   </li>
