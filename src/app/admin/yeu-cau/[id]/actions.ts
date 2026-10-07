@@ -25,10 +25,16 @@ export async function updateBookingAction(prev: ActionState, form: FormData): Pr
     typeof rawStatus === 'string' && (BOOKING_STATUSES as readonly string[]).includes(rawStatus)
       ? (rawStatus as BookingStatus)
       : undefined;
+  // Huỷ chỉ đi qua hộp thoại xác nhận (BookingActions), nơi ghi mã yêu cầu vào `confirm`.
+  if (status === 'CANCELLED' && form.get('confirm') !== id) {
+    return { ok: false, message: 'Cần xác nhận trước khi huỷ yêu cầu.', version: prev.version };
+  }
 
   const result = await updateBooking(id, { status, note });
   if (!result.ok) return { ok: false, message: result.error, version: prev.version };
 
   revalidatePath('/admin', 'layout');
-  return { ok: true, message: status ? 'Đã cập nhật trạng thái.' : 'Đã lưu ghi chú.', version: prev.version + 1 };
+  const message =
+    status === 'CANCELLED' ? `Đã huỷ yêu cầu ${id}.` : status ? 'Đã cập nhật trạng thái.' : 'Đã lưu ghi chú.';
+  return { ok: true, message, version: prev.version + 1 };
 }

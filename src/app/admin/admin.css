@@ -864,6 +864,58 @@
   margin: 12px 0 0;
 }
 
+/* Huỷ yêu cầu: viền + chữ màu cảnh báo ở hàng nút, nền đặc trong hộp thoại. */
+.bact-danger {
+  border-color: var(--st-crit);
+  color: var(--st-crit);
+}
+
+.bact-danger:hover {
+  color: var(--st-crit);
+  background: var(--sunset-soft);
+}
+
+.bact-danger-solid {
+  border: 0;
+  background: var(--st-crit);
+  color: #fff;
+}
+
+.bact-danger-solid:hover {
+  color: #fff;
+}
+
+.bact-danger:disabled,
+.bact-danger-solid:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.bact-danger-solid[aria-busy='true'] {
+  cursor: progress;
+}
+
+dialog.bact-dlg {
+  width: min(480px, calc(100vw - 32px));
+}
+
+.bact-dlg-body {
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 24px;
+  font-size: 14px;
+}
+
+.bact-dlg-body p {
+  margin: 0;
+}
+
+.bact-dlg .dlg-foot {
+  flex-wrap: wrap;
+}
+
 .timeline {
   list-style: none;
   margin: 0;

@@ -144,7 +144,7 @@ export default async function BookingDetail({ params }: Props) {
             <header className="acard-head">
               <h2>Xử lý</h2>
             </header>
-            <BookingActions id={record.id} status={record.status} />
+            <BookingActions id={record.id} status={record.status} customer={record.name} />
           </section>
 
           <section className="acard">
