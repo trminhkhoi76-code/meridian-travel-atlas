@@ -117,6 +117,37 @@ When replacing mocks:
 - booking persistence belongs behind `booking-store.ts`;
 - preserve existing API contracts unless the issue explicitly changes them.
 
+## Local PR review loop
+
+For a local coding agent working on its own PR in this repository:
+
+- GitHub CLI (`gh`) must already be authenticated for this repository.
+- To inspect all currently available PR feedback once, run:
+
+```bash
+npm run agent:review-inbox
+```
+
+- To keep watching the PR for newly arriving review comments, run:
+
+```bash
+npm run agent:watch-pr
+```
+
+The watcher is repository-local:
+- it refuses to run unless the current GitHub repository is exactly `trminhkhoi76-code/meridian-travel-atlas`;
+- it stores seen-comment state only under this repository's `.git/` directory;
+- it does not install a global daemon, hook, editor setting, or cross-repository configuration.
+
+When new feedback appears:
+1. Read the full review/comment and linked issue context.
+2. Verify the feedback is technically correct before changing code.
+3. Fix only justified findings and keep the change scoped.
+4. Run the required checks from this file.
+5. Commit and push to the same PR branch.
+6. Do not merge the PR.
+7. If a review comment is incorrect or conflicts with repository invariants, explain why in the PR instead of blindly applying it.
+
 ## Pull request expectations
 
 Each PR should include:
