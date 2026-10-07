@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+> **IMPORTANT — repository-local scope:** This file applies only to work performed inside `meridian-travel-atlas` (or a session explicitly scoped to this repository). Do not treat any instruction here as a global local-machine, editor, Claude/Codex, MCP, or cross-repository setting. Do not copy or propagate these rules to other personal or business repositories unless the user explicitly requests that separate change. When leaving this repository, stop applying this file and load the destination repository's own instructions.
+
 Guidance for Claude Code when working in `meridian-travel-atlas`.
 
 ## What this is
