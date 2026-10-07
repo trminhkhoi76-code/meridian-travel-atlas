@@ -39,6 +39,13 @@ After:
 
 -
 
+## Deployment impact
+
+- [ ] I understand merging this PR into `main` triggers an AWS Amplify deployment.
+- [ ] This change is safe to deploy after CI passes.
+- [ ] No required environment variable / Amplify configuration change is missing.
+- [ ] For visible UI changes, post-merge browser QA is expected on the deployed site.
+
 ## Known limitations / follow-up
 
 <!-- Leave empty if none. -->
