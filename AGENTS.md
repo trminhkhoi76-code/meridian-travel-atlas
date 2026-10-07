@@ -1,0 +1,111 @@
+# AGENTS.md
+
+Repository-wide instructions for coding agents working on Meridian Travel.
+
+## Start here
+
+Before changing code:
+
+1. Read `README.md` for product scope.
+2. Read `CLAUDE.md` for architecture details, non-obvious constraints, and deployment notes.
+3. Inspect the affected route, component, service seam, and existing tests before proposing changes.
+
+`CLAUDE.md` is the detailed engineering handbook. This file defines the cross-agent operating rules.
+
+## Git workflow
+
+- Never push directly to `main`.
+- Never merge pull requests.
+- Create one branch per issue/task:
+  - `agent/<issue-id>-<short-description>`
+  - Example: `agent/ADMIN-012-cancel-confirmation`
+- Keep changes scoped to the issue. Do not refactor unrelated code.
+- Use conventional commit-style messages:
+  - `feat(scope): ...`
+  - `fix(scope): ...`
+  - `refactor(scope): ...`
+  - `test(scope): ...`
+  - `chore(scope): ...`
+
+## Required checks before push
+
+Run:
+
+```bash
+npm ci
+npm run typecheck
+npm run build
+```
+
+If map coordinates or map source data change, also run:
+
+```bash
+npm run maps
+npm run typecheck
+npm run build
+```
+
+Do not claim checks passed unless they were actually run successfully.
+
+## Architecture invariants
+
+- Preserve Next.js App Router conventions already used in the repo.
+- Server catalogue reads go through `src/lib/catalog-service.ts`.
+- Client catalogue access follows the existing `CatalogProvider` pattern.
+- Do not reorder existing catalogue records in `RAW`; booking/admin data references stable positional keys.
+- Server must recalculate booking prices. Never trust totals sent by the client.
+- Keep auth tokens in HttpOnly cookies. Never expose them to browser JavaScript or localStorage.
+- Authorization decisions must use the auth-service-backed identity check, not decoded client-visible token data.
+- Do not add analytics/tracking scripts to `/admin`.
+- Do not remove the ISR/CDN cache workaround (`revalidate` / `expireTime`) without explicit approval and evidence that the Amplify/CloudFront issue is resolved.
+- Keep admin-specific layout styles in the admin surface; avoid class names that can collide with storefront styles after client navigation.
+- Avoid introducing a new dependency when an existing component, utility, CSS pattern, or platform API is sufficient.
+
+## UI/UX implementation rules
+
+- Reuse existing design tokens and shared components before adding new visual patterns.
+- Preserve the current Vietnamese-first UI language.
+- Every interactive feature must account for:
+  - default state
+  - loading/pending state
+  - error state
+  - disabled state where relevant
+  - empty state where relevant
+- Destructive actions require an explicit confirmation or a safe undo pattern.
+- Do not communicate status with color alone; pair color with text and/or iconography.
+- Preserve keyboard accessibility and visible focus.
+- Respect `prefers-reduced-motion`.
+- Avoid hardcoded one-off spacing/color values when an existing token is appropriate.
+- For UI PRs, include screenshots or a short before/after description in the PR.
+
+## Admin-specific rules
+
+- Treat customer names, emails, and phone numbers as sensitive operational data.
+- Do not add tracking or third-party analytics to admin routes.
+- Status-changing actions must make their consequence clear.
+- Destructive state changes must be reversible or confirmed.
+- Preserve auditability: when adding notes/status history, prefer author + timestamp metadata.
+- Optimize tables and filters for operator efficiency before decorative polish.
+
+## Data and persistence
+
+Current catalogue and booking persistence include mock/static seams. Do not hide this by adding unrelated local persistence.
+
+When replacing mocks:
+- catalogue integration belongs behind `catalog-service.ts` and the client catalogue boundary;
+- booking persistence belongs behind `booking-store.ts`;
+- preserve existing API contracts unless the issue explicitly changes them.
+
+## Pull request expectations
+
+Each PR should include:
+
+- linked issue/task;
+- concise problem statement;
+- summary of implementation;
+- files/areas affected;
+- validation commands actually run;
+- screenshots for visible UI changes;
+- known limitations or follow-up work.
+
+Do not merge the PR. Leave final approval/merge to the human maintainer.
