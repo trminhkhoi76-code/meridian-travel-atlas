@@ -1,0 +1,10 @@
+# Default ownership for review routing.
+* @trminhkhoi76-code
+
+# Sensitive / operational surfaces
+/src/app/admin/ @trminhkhoi76-code
+/src/lib/auth-service.ts @trminhkhoi76-code
+/src/lib/booking-store.ts @trminhkhoi76-code
+/src/lib/catalog-service.ts @trminhkhoi76-code
+/amplify.yml @trminhkhoi76-code
+/next.config.ts @trminhkhoi76-code
