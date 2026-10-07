@@ -4,6 +4,12 @@
 
 Guidance for Claude Code when working in `meridian-travel-atlas`.
 
+Claude Code does not read AGENTS.md on its own. The cross-agent operating rules (git workflow,
+deployment boundary, required checks, PR expectations) live there and apply to every task in this
+repo, so they are imported here (the import is repository-local, like the rest of this file):
+
+@AGENTS.md
+
 ## What this is
 
 **Meridian Travel** — a travel-commerce storefront for the Vietnamese market. List-first browsing
