@@ -2,6 +2,19 @@
 
 Repository-wide instructions for coding agents working on Meridian Travel.
 
+## IMPORTANT — Repository-local scope only
+
+These agent instructions are **repository-local**.
+
+- They apply only while an agent is working inside the `meridian-travel-atlas` repository or a session explicitly scoped to this repository.
+- They must **not** be copied, promoted, installed, or interpreted as global instructions for the developer's local machine.
+- They must **not** affect sibling repositories, parent directories, personal projects, business projects, or any other workspace.
+- Do not create or modify global agent configuration files (for example in the user's home directory, editor-global settings, global Claude/Codex/agent instructions, or shared MCP configuration) unless the user explicitly asks for that separate global change.
+- When an agent changes repositories, it must stop applying Meridian-specific rules and load the target repository's own instructions instead.
+- If repository scope is ambiguous, prefer doing nothing outside this repository rather than propagating these settings.
+
+This isolation is intentional: the same local machine contains unrelated personal and business repositories, and cross-repository instruction leakage is considered a configuration error.
+
 ## Start here
 
 Before changing code:
