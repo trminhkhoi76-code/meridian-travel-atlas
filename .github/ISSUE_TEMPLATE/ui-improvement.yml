@@ -1,0 +1,73 @@
+name: UI / UX improvement
+description: Report or propose a UI/UX improvement for Meridian Travel
+title: "[UI] "
+labels:
+  - ui
+  - ux
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for UI/UX improvements discovered through browser review, product feedback, or admin operations.
+
+  - type: input
+    id: surface
+    attributes:
+      label: Surface / route
+      description: Which page or workflow is affected?
+      placeholder: /admin/yeu-cau/:id
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is confusing, risky, inconsistent, or inefficient?
+      placeholder: Describe the current behavior and why it matters.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected UX
+      description: Describe the desired interaction and outcome.
+      placeholder: |
+        - Clicking ...
+        - User sees ...
+        - On success ...
+        - On failure ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Concrete conditions that must be true before this is considered done.
+      placeholder: |
+        - [ ] Keyboard accessible
+        - [ ] Existing design tokens reused
+        - [ ] Error/loading states covered
+        - [ ] No unrelated behavior changed
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Critical
+        - High
+        - Medium
+        - Low
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence / screenshots
+      description: Add screenshots, browser notes, reproduction details, or PR links if available.
