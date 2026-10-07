@@ -27,6 +27,14 @@ Before changing code:
   - `test(scope): ...`
   - `chore(scope): ...`
 
+## Deployment boundary
+
+- Every merge into `main` triggers an AWS Amplify deployment.
+- Treat merge approval as deployment approval.
+- Never merge solely to "see if it works" in production.
+- UI changes should be verified locally before PR, then browser-verified on the deployed site after the human maintainer merges.
+- Keep PRs small enough that a deployment can be rolled back or diagnosed quickly.
+
 ## Required checks before push
 
 Run:
