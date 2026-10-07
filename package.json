@@ -8,7 +8,9 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "maps": "node scripts/build-maps.mjs"
+    "maps": "node scripts/build-maps.mjs",
+    "agent:review-inbox": "node scripts/watch-pr-reviews.mjs --include-existing",
+    "agent:watch-pr": "node scripts/watch-pr-reviews.mjs --watch"
   },
   "dependencies": {
     "next": "^15.5.4",
