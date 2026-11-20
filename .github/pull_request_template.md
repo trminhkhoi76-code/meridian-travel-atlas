@@ -4,6 +4,15 @@
 
 Closes #
 
+## Behavior classification
+
+- [ ] LIVE runtime / actual integration
+- [ ] MOCK / DEMO / example data
+- [ ] TEST / static verification only
+- [ ] DOCS / no behavior change
+
+**What is backed by real persistence/service evidence, and what remains simulated?**
+
 ## What changed
 
 <!-- Keep this concise and scoped. -->
@@ -18,7 +27,7 @@ Closes #
 
 ## Validation
 
-Run and confirm only what actually passed:
+Run and confirm only what actually passed. This repository currently has no dedicated automated test script; **typecheck/build are not runtime tests**:
 
 - [ ] `npm ci`
 - [ ] `npm run typecheck`
@@ -38,6 +47,12 @@ After:
 <!-- What could break? What did you specifically verify? -->
 
 -
+
+## Production readiness
+
+- [ ] Any booking, upload, catalog, pricing, or analytics claim explicitly distinguishes MOCK from LIVE
+- [ ] No seed data is represented as customer activity or real revenue
+- [ ] If introducing real persistence/email/checkout, provide integration and delivery evidence
 
 ## Deployment impact
 

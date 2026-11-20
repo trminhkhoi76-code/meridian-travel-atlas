@@ -27,7 +27,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <AdminNav overdue={overdue} email={session?.email} />
       <main className="amain">
         <p className="amock">
-          Kho giả lập trong bộ nhớ · dữ liệu mẫu + yêu cầu gửi từ lúc máy chủ khởi động · khởi động lại là mất
+          CHẾ ĐỘ DEMO / KHÔNG PHẢI BÁO CÁO THỰC TẾ · số liệu gồm yêu cầu mẫu và dữ liệu lưu tạm trong bộ nhớ · không lưu bền vững, không gửi email thật · không dùng để đối soát hoặc xác nhận đơn
         </p>
         {children}
       </main>
